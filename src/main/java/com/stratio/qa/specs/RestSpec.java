@@ -363,6 +363,11 @@ public class RestSpec extends BaseGSpec {
         assertThat(commonspec.getResponse().getResponse()).containsPattern(pattern);
     }
 
+    @Then("^the service response must not contain the text '(.*?)'$")
+    public void assertNegativeResponseMessage(String expectedText) throws ClassNotFoundException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+        assertThat(commonspec.getResponse().getResponse()).doesNotContain(expectedText);
+    }
+
     @Then("^the service response status must be '(.*?)'( and its response length must be '(.*?)' | and its response must contain the text '(.*?)')?$")
     public void assertResponseStatusLength(Integer expectedStatus, String foo, Integer expectedLength, String expectedText) {
         if (foo != null) {
