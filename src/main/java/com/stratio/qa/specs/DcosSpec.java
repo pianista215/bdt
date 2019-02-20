@@ -172,18 +172,10 @@ public class DcosSpec extends BaseGSpec {
     }
 
     public void checkDataCentersDistribution(String[] serviceListArray, String[] dataCentersIpsArray) throws Exception {
-        int[] expectedDistribution = new int[dataCentersIpsArray.length];
         int[] results = new int[dataCentersIpsArray.length];
-        //Calculamos distribucion
         int div = serviceListArray.length / dataCentersIpsArray.length;
         int resto = serviceListArray.length % dataCentersIpsArray.length;
-        for (int i = 0; i < expectedDistribution.length; i++) {
-            expectedDistribution[i] = div;
-        }
-        for (int i = 0; i < resto; i++) {
-            expectedDistribution[i] = expectedDistribution[i] + 1;
-        }
-        ///Fin calculo distribucion
+
         for (int i = 0; i < serviceListArray.length; i++) {
             commonspec.executeCommand("dcos task | grep " + serviceListArray[i] + " | awk '{print $2}'", 0, null);
             String service_ip = commonspec.getRemoteSSHConnection().getResult();
@@ -193,12 +185,20 @@ public class DcosSpec extends BaseGSpec {
                 }
             }
         }
-        Arrays.sort(expectedDistribution);
-        Arrays.sort(results);
-        assertThat(expectedDistribution.length).isEqualTo(results.length);
+
+        int sum = 0;
         for (int i = 0; i < results.length; i++) {
-            assertThat(expectedDistribution[i]).isEqualTo(results[i]);
+            if (resto > 0) {
+                assertThat(results[i]).as("Services in datacenter should be: " + div + " or " + (div + 1)).isBetween(div - 1, div + 2);
+            } else {
+                assertThat(results[i]).as("Services in datacenter should be: " + div + " and it is: " + results[i]).isEqualTo(div);
+            }
+
+            sum = sum + results[i];
         }
+
+        assertThat(sum).as("There are less services: " + sum + " than expected: " + serviceListArray.length).isEqualTo(serviceListArray.length);
+
     }
 
     public String obtainsDataCenters(String jsonString) {
