@@ -2,6 +2,10 @@
 
 Only listing significant user-visible, not internal code cleanups and minor bug fixes.
 
+## 0.10.0 (upcoming)
+
+* Pending changelog
+
 ## 0.9.0 (upcoming)
 
 * [QATM-1899] Upgrade Cucumber to 2.4.0
