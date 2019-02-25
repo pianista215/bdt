@@ -75,9 +75,15 @@ public class RunOnTagAspect {
         if (!pickleEvent.pickle.getLocations().isEmpty()) {
             line = pickleEvent.pickle.getLocations().get(0).getLine();
         }
-        Boolean exit = tagsIteration(pickleEvent.pickle.getTags(), line);
-        if (exit) {
-            ThreadProperty.set("skippedOnParams" + pickleEvent.pickle.getName() + line, "true");
+        try {
+            Boolean exit = tagsIteration(pickleEvent.pickle.getTags(), line);
+            if (exit) {
+                ThreadProperty.set("skippedOnParams" + pickleEvent.pickle.getName() + line, "true");
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+            pickleEvent.pickle.getTags().add(new PickleTag(new PickleLocation(line, 0), "@ignore"));
+            pickleEvent.pickle.getTags().add(new PickleTag(new PickleLocation(line, 0), "@envCondition"));
         }
         return (Boolean) pjp.proceed();
     }

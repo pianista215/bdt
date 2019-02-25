@@ -13,6 +13,7 @@ Only listing significant user-visible, not internal code cleanups and minor bug 
 * [QATM-2071] fix step to check services distribution in datacenters
 * [QATM-1974] RunOnEnv / SkipOnEnv improvements
 * [QATM-2067] @always tag allows execute a test even if an important scenario failed previously
+* [QATM-2099] Try/catch added in RunOnTagAspect
 
 ## 0.8.0 (February 07, 2019)
 
