@@ -818,7 +818,7 @@ public class CommonG {
                 }
 
                 if (modifiedData.startsWith("[") && modifiedData.endsWith("]")) {
-                    modifiedData = modifiedData.substring(1, modifiedData.length() - 1);
+                    modifiedData = "{\"content\":" + modifiedData + "}";
                     array = true;
                 } else {
                     JsonObject object = new JsonObject(JsonValue.readHjson(modifiedData).asObject());
@@ -828,9 +828,15 @@ public class CommonG {
 
                 switch (operation.toUpperCase()) {
                     case "DELETE":
+                        if (array) {
+                            composeKey = "$.content" + composeKey.substring(1, composeKey.length());
+                        }
                         jsonAsMap = JsonPath.parse(modifiedData).delete(composeKey).json();
                         break;
                     case "ADD":
+                        if (array) {
+                            composeKey = "$.content" + composeKey.substring(1, composeKey.length());
+                        }
                         // Get the last key
                         String newKey;
                         String newComposeKey;
@@ -885,17 +891,29 @@ public class CommonG {
 //                        jsonAsMap = JsonPath.parse(modifiedData).put(newComposeKey, newKey, newValue).json();
 //                        break;
                     case "UPDATE":
+                        if (array) {
+                            composeKey = "$.content" + composeKey.substring(1, composeKey.length());
+                        }
                         jsonAsMap = JsonPath.parse(modifiedData).set(composeKey, newValue).json();
                         break;
                     case "APPEND":
+                        if (array) {
+                            composeKey = "$.content" + composeKey.substring(1, composeKey.length());
+                        }
                         String appendValue = JsonPath.parse(modifiedData).read(composeKey);
                         jsonAsMap = JsonPath.parse(modifiedData).set(composeKey, appendValue + newValue).json();
                         break;
                     case "PREPEND":
+                        if (array) {
+                            composeKey = "$.content" + composeKey.substring(1, composeKey.length());
+                        }
                         String prependValue = JsonPath.parse(modifiedData).read(composeKey);
                         jsonAsMap = JsonPath.parse(modifiedData).set(composeKey, newValue + prependValue).json();
                         break;
                     case "REPLACE":
+                        if (array) {
+                            composeKey = "$.content" + composeKey.substring(1, composeKey.length());
+                        }
                         if ("array".equals(typeJsonObject)) {
                             jArray = new JSONArray();
                             if (!"[]".equals(newValue)) {
@@ -937,6 +955,9 @@ public class CommonG {
                             break;
                         }
                     case "ADDTO":
+                        if (array) {
+                            composeKey = "$.content" + composeKey.substring(1, composeKey.length());
+                        }
                         if ("array".equals(typeJsonObject)) {
                             jArray = new JSONArray();
                             if (!"[]".equals(newValue)) {
@@ -974,6 +995,9 @@ public class CommonG {
                             break;
                         }
                     case "HEADER":
+                        if (array) {
+                            composeKey = "$.content" + composeKey.substring(1, composeKey.length());
+                        }
                         this.headers.put(composeKey, newValue);
                         break;
                     default:
@@ -1017,7 +1041,7 @@ public class CommonG {
         }
 
         if (array) {
-            modifiedData = "[" + modifiedData + "]";
+            modifiedData = modifiedData.substring(11, modifiedData.length() - 1);
         }
 
         return modifiedData;
