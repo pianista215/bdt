@@ -1375,4 +1375,313 @@ public class CommonGTest {
         CommonG commong = new CommonG();
         assertThat(false).isEqualTo(commong.cookieExists(cookieName));
     }
+
+    @Test
+    public void modifyDataArrayDeleteTest() throws Exception{
+        String data = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"},{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"}]";
+        String expectedData = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"}]";
+        CommonG commong = new CommonG();
+
+        String type = "json";
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("$.[1]", "DELETE", "N/A", "N/A"));
+        DataTable modifications = DataTable.create(rawData);
+
+        String modifiedData = commong.modifyData(data, type, modifications);
+        JSONAssert.assertEquals(expectedData, modifiedData, false);
+    }
+
+    @Test
+    public void modifyDataArrayAddToStringTest() throws Exception{
+        String data = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"}]";
+        String expectedData = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"},\"value\"]";
+        CommonG commong = new CommonG();
+
+        String type = "json";
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("$", "ADDTO", "value", "string"));
+        DataTable modifications = DataTable.create(rawData);
+
+        String modifiedData = commong.modifyData(data, type, modifications);
+        JSONAssert.assertEquals(expectedData, modifiedData, false);
+    }
+
+    @Test
+    public void modifyDataArrayAddToNumberTest() throws Exception{
+        String data = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"}]";
+        String expectedData = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"},1]";
+        CommonG commong = new CommonG();
+
+        String type = "json";
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("$", "ADDTO", "1", "number"));
+        DataTable modifications = DataTable.create(rawData);
+
+        String modifiedData = commong.modifyData(data, type, modifications);
+        JSONAssert.assertEquals(expectedData, modifiedData, false);
+    }
+
+    @Test
+    public void modifyDataArrayAddToArrayTest() throws Exception{
+        String data = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"}]";
+        String expectedData = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"},[]]";
+        CommonG commong = new CommonG();
+
+        String type = "json";
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("$", "ADDTO", "[]", "array"));
+        DataTable modifications = DataTable.create(rawData);
+
+        String modifiedData = commong.modifyData(data, type, modifications);
+        JSONAssert.assertEquals(expectedData, modifiedData, false);
+    }
+
+    @Test
+    public void modifyDataArrayAddToBooleanTest() throws Exception{
+        String data = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"}]";
+        String expectedData = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"},true]";
+        CommonG commong = new CommonG();
+
+        String type = "json";
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("$", "ADDTO", "true", "boolean"));
+        DataTable modifications = DataTable.create(rawData);
+
+        String modifiedData = commong.modifyData(data, type, modifications);
+        JSONAssert.assertEquals(expectedData, modifiedData, false);
+    }
+
+    @Test
+    public void modifyDataArrayAddToObjectTest() throws Exception{
+        String data = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"}]";
+        String expectedData = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"},{}]";
+        CommonG commong = new CommonG();
+
+        String type = "json";
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("$", "ADDTO", "{}", "object"));
+        DataTable modifications = DataTable.create(rawData);
+
+        String modifiedData = commong.modifyData(data, type, modifications);
+        JSONAssert.assertEquals(expectedData, modifiedData, false);
+    }
+
+    @Test
+    public void modifyDataArrayAddToNullTest() throws Exception{
+        String data = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"}]";
+        String expectedData = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"},null]";
+        CommonG commong = new CommonG();
+
+        String type = "json";
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("$", "ADDTO", "null", "null"));
+        DataTable modifications = DataTable.create(rawData);
+
+        String modifiedData = commong.modifyData(data, type, modifications);
+        JSONAssert.assertEquals(expectedData, modifiedData, false);
+    }
+
+
+    @Test
+    public void modifyDataArrayAddStringTest() throws Exception{
+        String data = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"}]";
+        String expectedData = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\",\"key\":\"value\"}]";
+        CommonG commong = new CommonG();
+
+        String type = "json";
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("$.[0].key", "ADD", "value", "string"));
+        DataTable modifications = DataTable.create(rawData);
+
+        String modifiedData = commong.modifyData(data, type, modifications);
+        JSONAssert.assertEquals(expectedData, modifiedData, false);
+    }
+
+    @Test
+    public void modifyDataArrayAddNumberTest() throws Exception{
+        String data = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"}]";
+        String expectedData = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\",\"key\":1}]";
+        CommonG commong = new CommonG();
+
+        String type = "json";
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("$.[0].key", "ADD", "1", "number"));
+        DataTable modifications = DataTable.create(rawData);
+
+        String modifiedData = commong.modifyData(data, type, modifications);
+        JSONAssert.assertEquals(expectedData, modifiedData, false);
+    }
+
+    @Test
+    public void modifyDataArrayAddArrayTest() throws Exception{
+        String data = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"}]";
+        String expectedData = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\",\"key\":[]}]";
+        CommonG commong = new CommonG();
+
+        String type = "json";
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("$.[0].key", "ADD", "[]", "array"));
+        DataTable modifications = DataTable.create(rawData);
+
+        String modifiedData = commong.modifyData(data, type, modifications);
+        JSONAssert.assertEquals(expectedData, modifiedData, false);
+    }
+
+    @Test
+    public void modifyDataArrayAddBooleanTest() throws Exception{
+        String data = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"}]";
+        String expectedData = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\",\"key\":true}]";
+        CommonG commong = new CommonG();
+
+        String type = "json";
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("$.[0].key", "ADD", "true", "boolean"));
+        DataTable modifications = DataTable.create(rawData);
+
+        String modifiedData = commong.modifyData(data, type, modifications);
+        JSONAssert.assertEquals(expectedData, modifiedData, false);
+    }
+
+    @Test
+    public void modifyDataArrayAddObjectTest() throws Exception{
+        String data = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"}]";
+        String expectedData = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\",\"key\":{}}]";
+        CommonG commong = new CommonG();
+
+        String type = "json";
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("$.[0].key", "ADD", "{}", "object"));
+        DataTable modifications = DataTable.create(rawData);
+
+        String modifiedData = commong.modifyData(data, type, modifications);
+        JSONAssert.assertEquals(expectedData, modifiedData, false);
+    }
+
+    @Test
+    public void modifyDataArrayAddNullTest() throws Exception{
+        String data = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"}]";
+        String expectedData = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\",\"key\":null}]";
+        CommonG commong = new CommonG();
+
+        String type = "json";
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("$.[0].key", "ADD", "null", "null"));
+        DataTable modifications = DataTable.create(rawData);
+
+        String modifiedData = commong.modifyData(data, type, modifications);
+        JSONAssert.assertEquals(expectedData, modifiedData, false);
+    }
+
+    @Test
+    public void modifyDataArrayReplaceStringTest() throws Exception{
+        String data = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"}]";
+        String expectedData = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"newname\"}]";
+        CommonG commong = new CommonG();
+
+        String type = "json";
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("$.[0].name", "REPLACE", "newname", "string"));
+        DataTable modifications = DataTable.create(rawData);
+
+        String modifiedData = commong.modifyData(data, type, modifications);
+        JSONAssert.assertEquals(expectedData, modifiedData, false);
+    }
+
+    @Test
+    public void modifyDataArrayReplaceNumberTest() throws Exception{
+        String data = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"}]";
+        String expectedData = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":1}]";
+        CommonG commong = new CommonG();
+
+        String type = "json";
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("$.[0].name", "REPLACE", "1", "number"));
+        DataTable modifications = DataTable.create(rawData);
+
+        String modifiedData = commong.modifyData(data, type, modifications);
+        JSONAssert.assertEquals(expectedData, modifiedData, false);
+    }
+
+    @Test
+    public void modifyDataArrayReplaceArrayTest() throws Exception{
+        String data = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"}]";
+        String expectedData = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":[]}]";
+        CommonG commong = new CommonG();
+
+        String type = "json";
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("$.[0].name", "REPLACE", "[]", "array"));
+        DataTable modifications = DataTable.create(rawData);
+
+        String modifiedData = commong.modifyData(data, type, modifications);
+        JSONAssert.assertEquals(expectedData, modifiedData, false);
+    }
+
+    @Test
+    public void modifyDataArrayReplaceBooleanTest() throws Exception{
+        String data = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"}]";
+        String expectedData = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":true}]";
+        CommonG commong = new CommonG();
+
+        String type = "json";
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("$.[0].name", "REPLACE", "true", "boolean"));
+        DataTable modifications = DataTable.create(rawData);
+
+        String modifiedData = commong.modifyData(data, type, modifications);
+        JSONAssert.assertEquals(expectedData, modifiedData, false);
+    }
+
+    @Test
+    public void modifyDataArrayReplaceObjectTest() throws Exception{
+        String data = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"}]";
+        String expectedData = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":{}}]";
+        CommonG commong = new CommonG();
+
+        String type = "json";
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("$.[0].name", "REPLACE", "{}", "object"));
+        DataTable modifications = DataTable.create(rawData);
+
+        String modifiedData = commong.modifyData(data, type, modifications);
+        JSONAssert.assertEquals(expectedData, modifiedData, false);
+    }
+
+    @Test
+    public void modifyDataArrayReplaceNullTest() throws Exception{
+        String data = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"}]";
+        String expectedData = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":null}]";
+        CommonG commong = new CommonG();
+
+        String type = "json";
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("$.[0].name", "REPLACE", "null", "null"));
+        DataTable modifications = DataTable.create(rawData);
+
+        String modifiedData = commong.modifyData(data, type, modifications);
+        JSONAssert.assertEquals(expectedData, modifiedData, false);
+    }
+
+    @Test
+    public void modifyDataArrayUpdateTest() throws Exception{
+        String data = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"\"}]";
+        String expectedData = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"\",\"id\":-1,\"name\":\"newname\"}]";
+        CommonG commong = new CommonG();
+
+        String type = "json";
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("$.[0].name", "UPDATE", "newname"));
+        DataTable modifications = DataTable.create(rawData);
+
+        String modifiedData = commong.modifyData(data, type, modifications);
+        JSONAssert.assertEquals(expectedData, modifiedData, false);
+    }
+
+    @Test
+    public void modifyDataArrayAppendTest() throws Exception{
+        String data = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"description\",\"id\":-1,\"name\":\"name\"}]";
+        String expectedData = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"description\",\"id\":-1,\"name\":\"nameappended\"}]";
+        CommonG commong = new CommonG();
+
+        String type = "json";
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("$.[0].name", "APPEND", "appended"));
+        DataTable modifications = DataTable.create(rawData);
+
+        String modifiedData = commong.modifyData(data, type, modifications);
+        JSONAssert.assertEquals(expectedData, modifiedData, false);
+    }
+
+    @Test
+    public void modifyDataArrayPrependTest() throws Exception{
+        String data = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"description\",\"id\":-1,\"name\":\"name\"}]";
+        String expectedData = "[{\"businessAssets\":{\"id\":1},\"metadataPath\":\"\",\"description\":\"description\",\"id\":-1,\"name\":\"prependedname\"}]";
+        CommonG commong = new CommonG();
+
+        String type = "json";
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("$.[0].name", "PREPEND", "prepended"));
+        DataTable modifications = DataTable.create(rawData);
+
+        String modifiedData = commong.modifyData(data, type, modifications);
+        JSONAssert.assertEquals(expectedData, modifiedData, false);
+    }
 }
