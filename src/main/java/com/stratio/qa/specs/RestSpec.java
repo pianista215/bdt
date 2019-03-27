@@ -17,15 +17,20 @@
 package com.stratio.qa.specs;
 
 import com.ning.http.client.Response;
+import com.stratio.qa.utils.ThreadProperty;
 import cucumber.api.DataTable;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.api.WritableAssertionInfo;
 import org.json.JSONArray;
 
+import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.Future;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.stratio.qa.assertions.Assertions.assertThat;
@@ -393,4 +398,30 @@ public class RestSpec extends BaseGSpec {
             }
         }
     }
+
+    @Then("^I save service response in environment variable '(.*?)'( and file '(.*?)')?$")
+    public void saveResponseInEnvironmentVariableFile(String envVar, String foo, String fileName) throws Exception {
+        String value = commonspec.getResponse().getResponse();
+
+        ThreadProperty.set(envVar, value);
+
+        if (foo != null) {
+            // Create file (temporary) and set path to be accessible within test
+            File tempDirectory = new File(String.valueOf(System.getProperty("user.dir") + "/target/test-classes/"));
+            String absolutePathFile = tempDirectory.getAbsolutePath() + "/" + fileName;
+            commonspec.getLogger().debug("Creating file {} in 'target/test-classes'", absolutePathFile);
+            // Note that this Writer will delete the file if it exists
+            Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(absolutePathFile), "UTF-8"));
+            try {
+                out.write(value);
+            } catch (Exception e) {
+                commonspec.getLogger().error("Custom file {} hasn't been created:\n{}", absolutePathFile, e.toString());
+            } finally {
+                out.close();
+            }
+
+            Assertions.assertThat(new File(absolutePathFile).isFile());
+        }
+    }
+
 }
