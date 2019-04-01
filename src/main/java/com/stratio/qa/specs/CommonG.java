@@ -1452,11 +1452,11 @@ public class CommonG {
     public void resultsMustBeCSV(DataTable expectedResults) throws Exception {
         if (getCSVResults() != null) {
             //Map for cucumber expected results
-            List<Map<String, Object>> resultsListExpected = new ArrayList<Map<String, Object>>();
-            Map<String, Object> resultsCucumber;
+            List<Map<String, String>> resultsListExpected = new ArrayList<Map<String, String>>();
+            Map<String, String> resultsCucumber;
 
             for (int e = 1; e < expectedResults.getPickleRows().size(); e++) {
-                resultsCucumber = new HashMap<String, Object>();
+                resultsCucumber = new HashMap<String, String>();
 
                 for (int i = 0; i < expectedResults.getPickleRows().get(0).getCells().size(); i++) {
                     resultsCucumber.put(expectedResults.getPickleRows().get(0).getCells().get(i).getValue(), expectedResults.getPickleRows().get(e).getCells().get(i).getValue());
@@ -1468,40 +1468,19 @@ public class CommonG {
 
             getLogger().debug("Obtained Results: " + getCSVResults().toString());
 
-            //Comparisons
-            int occurrencesObtained = 0;
-            int iterations = 0;
-            int occurrencesExpected = 0;
-            String nextKey;
-            for (int e = 0; e < resultsListExpected.size(); e++) {
-                iterations = 0;
-                occurrencesObtained = 0;
-                occurrencesExpected = Integer.parseInt(resultsListExpected.get(e).get("occurrences").toString());
-
-                List<Map<String, String>> results = getCSVResults();
-                for (Map<String, String> result : results) {
-                    Iterator<String> it = resultsListExpected.get(0).keySet().iterator();
-
-                    while (it.hasNext()) {
-                        nextKey = it.next();
-                        if (!nextKey.equals("occurrences")) {
-                            if (result.get(nextKey).toString().equals(resultsListExpected.get(e).get(nextKey).toString())) {
-                                iterations++;
-                            }
-                        }
-
-                        if (iterations == resultsListExpected.get(0).keySet().size() - 1) {
-                            occurrencesObtained++;
-                            iterations = 0;
-                        }
-                    }
-                    iterations = 0;
-                }
-
-                assertThat(occurrencesExpected).overridingErrorMessage("In row " + e + " have been found "
-                        + occurrencesObtained + " results and " + occurrencesExpected + " were expected").isEqualTo(occurrencesObtained);
+            //Firts, we checkt that the number of rows are equals
+            assertThat(resultsListExpected.size()).overridingErrorMessage("The number of rows of expected result is %s but the csv file contains %s", resultsListExpected.size(), getCSVResults().size()).isEqualTo(getCSVResults().size());
+            //Then we check the CSV content
+            for (int i = 0; i < resultsListExpected.size(); i++) {
+                Map<String, String> expectedRow = resultsListExpected.get(i);
+                Map<String, String> obtainedRow = getCSVResults().get(i);
+                //First we check the number of columns
+                assertThat(expectedRow.size()).overridingErrorMessage("The number columns of row %s has to be %s but was %s", i, expectedRow.size(), obtainedRow.size()).isEqualTo(obtainedRow.size());
+                //Check the headers values
+                assertThat(expectedRow.keySet()).overridingErrorMessage("The headers do not match").isEqualTo(obtainedRow.keySet());
+                //Now, we are going to check the values
+                assertThat(expectedRow).overridingErrorMessage("The content of the obtained row %s is different from obtainerd", i).isEqualTo(obtainedRow);
             }
-
         } else {
             throw new Exception("You must execute a query before trying to get results");
         }
