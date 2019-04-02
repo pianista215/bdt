@@ -24,12 +24,15 @@ import com.stratio.qa.utils.ThreadProperty;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
+import org.apache.commons.collections.map.HashedMap;
 import org.assertj.core.api.Assertions;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.*;
 import java.util.concurrent.Future;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.jayway.jsonpath.JsonPath;
 
@@ -519,5 +522,187 @@ public class DcosSpec extends BaseGSpec {
         ArrayList cookieList = new ArrayList();
         cookieList.add(cookie);
         this.commonspec.setCookies(cookieList);
+    }
+
+
+    /**
+     * Check if a role of a service complies the established constraints
+     *
+     * @param role    name of role of a service
+     * @param service    name of service of exhibitor
+     * @param instance    name of instance of a service
+     * @param constraints all stablished contraints separated by a semicolumn.
+     *                       Example: constraint1,constraint2,...
+     * @throws Exception
+     */
+    @Then("^The role '(.+?)' of the service '(.+?)' with instance '(.+?)' complies the constraints '(.+?)'$")
+    public void checkComponentConstraints(String role, String service, String instance, String constraints) throws Exception {
+        checkComponentConstraint(role, service, instance, constraints.split(","));
+    }
+
+    public void checkComponentConstraint(String role, String service, String instance, String[] constraints) throws Exception {
+        for (int i = 0; i < constraints.length; i++) {
+            String[] elements = constraints[i].split(":");
+            Assertions.assertThat(elements.length).overridingErrorMessage("Error while parsing constraints. The constraint's format is ATRIBUTE:CONSTRAINT:VALOR or ATRIBUTE:CONSTRAINT").isIn(2, 3);
+            Assertions.assertThat(elements[1]).overridingErrorMessage("Error while parsing constraints. Constraints should be CLUSTER, UNIQUE, LIKE, UNLIKE, GROUP_BY, MAX_PER or IS").isIn("UNIQUE", "CLUSTER", "GROUP_BY", "LIKE", "UNLIKE", "MAX_PER", "IS");
+            if (elements.length == 2) {
+                Assertions.assertThat(elements[1]).overridingErrorMessage("Error while parsing constraints. The constraint's format " + elements[1] + " is ATRIBUTE:CONSTRAINT:VALOR").isIn("UNIQUE", "CLUSTER", "GROUP_BY");
+                if (!elements[1].equals("GROUP_BY")) {
+                    checkConstraint(role, service, instance, elements[0], elements[1], null);
+                }
+            } else {
+                Assertions.assertThat(elements[1]).overridingErrorMessage("Error while parsing constraints. The constraint's format " + elements[1] + " is ATRIBUTE:CONSTRAINT").isNotEqualTo("UNIQUE");
+                checkConstraint(role, service, instance, elements[0], elements[1], elements[2]);
+            }
+        }
+    }
+
+    public void checkConstraint(String role, String service, String instance, String tag, String constraint, String value) throws Exception {
+        RestSpec  restspec = new RestSpec(commonspec);
+        restspec.sendRequestTimeout(100, 5, "GET", "/exhibitor/exhibitor/v1/explorer/node-data?key=%2Fdatastore%2F" + service + "%2F" + instance + "%2Fplan-v2-json&_=", "so that the response contains", null, "str");
+        MiscSpec miscspec = new MiscSpec(commonspec);
+        miscspec.saveElementEnvironment(null, null, "$.str", "exhibitor_answer");
+        Assertions.assertThat(ThreadProperty.get("exhibitor_answer")).overridingErrorMessage("Error while parsing constraints. The instance " + instance + " of the service " + service + " isn't deployed").isNotEmpty();
+        CommandExecutionSpec commandexecutionspec = new CommandExecutionSpec(commonspec);
+        if (tag.equals("hostname")) {
+            selectElements(role, service, "agent_hostname");
+            String[] hostnames = ThreadProperty.get("elementsConstraint").split("\"\"");
+            checkConstraintType(role, instance, tag, constraint, value, hostnames);
+        } else {
+            restspec.sendRequestTimeout(100, 5, "GET", "/mesos/slaves", "so that the response contains", null, "slaves");
+            miscspec.saveElementEnvironment(null, null, "$", "mesos_answer");
+            selectElements(role, service, "slaveid");
+            String[] slavesid = ThreadProperty.get("elementsConstraint").split("\"\"");
+            String[] valor = new String[slavesid.length];
+            for (int i = 0; i < slavesid.length; i++) {
+                commandexecutionspec.executeLocalCommand("echo '" + ThreadProperty.get("mesos_answer") + "' | jq '.slaves[] | select(.id == \"" + slavesid[i] + "\").attributes." + tag + "' | sed 's/^.\\|.$//g'", " with exit status ", 0, " and save the value in environment variable ", "valortag");
+                valor[i] = ThreadProperty.get("valortag");
+            }
+            checkConstraintType(role, instance, tag, constraint, value, valor);
+        }
+    }
+
+    private void selectElements (String role, String service, String element) throws Exception {
+        CommandExecutionSpec commandexecutionspec = new CommandExecutionSpec(commonspec);
+        Assertions.assertThat(service).overridingErrorMessage("Error while parsing arguments. The service must be community, pbd or zookeeper").isIn("community", "zookeeper", "pbd");
+        int pos = selectExhibitorRole(role, service);
+        Assertions.assertThat(pos).overridingErrorMessage("Error while parsing arguments. The role " + role + " of the service " + service + " doesn't exist").isNotEqualTo(-1);
+        commandexecutionspec.executeLocalCommand("echo '" + ThreadProperty.get("exhibitor_answer") + "' | jq '.phases[" + Integer.toString(pos) + "].\"000" + Integer.toString(pos + 1) + "\".steps[][] | select(.status | contains(\"RUNNING\"))." + element + "' | sed '1 s/^\"//g' | sed '$ s/\"$//g'", " with exit status ", 0, " and save the value in environment variable ", "elementsConstraint");
+    }
+
+    public void checkConstraintType (String role, String instance, String tag, String constraint, String value, String[] elements) throws Exception {
+        Pattern p = value != null ? Pattern.compile(value) : null;
+        Matcher m;
+        switch (constraint) {
+            case "UNIQUE":
+                for (int i = 0; i < elements.length; i++) {
+                    for (int j = i + 1; j < elements.length; j++) {
+                        Assertions.assertThat(elements[i]).overridingErrorMessage("The role " + role + " of the instance " + instance + " doesn't complies the established constraint " + tag + ":" + constraint).isNotEqualTo(elements[j]);
+                    }
+                }
+                break;
+            case "CLUSTER":
+                if (value == null) {
+                    for (int i = 0; i < elements.length; i++) {
+                        for (int j = i + 1; j < elements.length; j++) {
+                            Assertions.assertThat(elements[i]).overridingErrorMessage("The role " + role + " of the instance " + instance + " doesn't complies the established constraint " + tag + ":" + constraint).isEqualTo(elements[j]);
+                        }
+                    }
+                } else {
+                    checkConstraintClusterValueIs(role, instance, tag, constraint, value, elements);
+                }
+                break;
+            case "LIKE":
+                for (int i = 0; i < elements.length; i++) {
+                    m = p.matcher(elements[i]);
+                    Assertions.assertThat(m.find()).overridingErrorMessage("The role " + role + " of the instance " + instance + " doesn't complies the established constraint " + tag + ":" + constraint + ":" + value).isEqualTo(true);
+                }
+                break;
+            case "UNLIKE":
+                for (int i = 0; i < elements.length; i++) {
+                    m = p.matcher(elements[i]);
+                    Assertions.assertThat(m.find()).overridingErrorMessage("The role " + role + " of the instance " + instance + " doesn't complies the established constraint " + tag + ":" + constraint + ":" + value).isEqualTo(false);
+                }
+                break;
+            case "IS":
+                checkConstraintClusterValueIs(role, instance, tag, constraint, value, elements);
+                break;
+            case "MAX_PER":
+                Map<String, Integer> diferent = new HashMap<String, Integer>();
+                int count;
+                for (int i = 0; i < elements.length; i++) {
+                    if (!diferent.containsKey(elements[i])) {
+                        diferent.put(elements[i], 1);
+                    } else {
+                        count = diferent.get(elements[i]);
+                        count = count + 1;
+                        diferent.put(elements[i], count);
+                    }
+                }
+                Iterator it = diferent.keySet().iterator();
+                while (it.hasNext()) {
+                    Assertions.assertThat(diferent.get(it.next())).overridingErrorMessage("The role " + role + " of the instance " + instance + " doesn't complies the established constraint " + tag + ":" + constraint + ":" + value).isLessThanOrEqualTo(Integer.parseInt(value));
+                }
+                break;
+            case "GROUP_BY":
+                ArrayList<String> dif = new ArrayList<>();
+                dif.add(elements[0]);
+                boolean ok;
+                for (int i = 1; i < elements.length; i++) {
+                    ok = false;
+                    for (int j = 0; j < dif.size(); j++) {
+                        if (elements[i].equals(dif.get(j))) {
+                            ok = true;
+                            j = dif.size();
+                        }
+                    }
+                    if (!ok) {
+                        dif.add(elements[i]);
+                    }
+                }
+                Assertions.assertThat(dif.size()).overridingErrorMessage("The role " + role + " of the instance " + instance + " doesn't complies the established constraint " + tag + ":" + constraint + ":" + value).isLessThanOrEqualTo(Integer.parseInt(value));
+                break;
+            default:
+                commonspec.getExceptions().add(new Exception("Error while parsing constraints. Constraints should be CLUSTER, UNIQUE, LIKE, UNLIKE, GROUP_BY, UNIQUE, LIKE, UNLIKE, GROUP_BY, MAX_PER or IS"));
+        }
+    }
+
+    public void checkConstraintClusterValueIs (String role, String instance, String tag, String constraint, String value, String[] elements) throws Exception {
+        for (int i = 0; i < elements.length; i++) {
+            for (int j = i + 1; j < elements.length; j++) {
+                Assertions.assertThat(elements[i]).overridingErrorMessage("The role " + role + " of the instance " + instance + " doesn't complies the established constraint " + tag + ":" + constraint + ":" + value).isEqualTo(elements[j]);
+                Assertions.assertThat(elements[i]).overridingErrorMessage("The role " + role + " of the instance " + instance + " doesn't complies the established constraint " + tag + ":" + constraint + ":" + value).isEqualTo(value);
+            }
+        }
+    }
+
+    private int selectExhibitorRole(String role, String service) {
+        switch (service) {
+            case "community":
+                switch (role) {
+                    case "master": return 0;
+                    case "sync_slave": return 1;
+                    case "async_slave": return 2;
+                    case "agent": return 3;
+                    default: return -1;
+                }
+            case "pbd":
+                switch (role) {
+                    case "gtm": return 0;
+                    case "gtm_slave": return 1;
+                    case "gtm_proxy": return 2;
+                    case "datanode": return 3;
+                    case "datanode_slave": return 4;
+                    case "coordinator": return 5;
+                    case "agent": return 6;
+                    default: return -1;
+                }
+            case "zookeeper":
+                switch (role) {
+                    case "zkNode": return 0;
+                    default: return -1;
+                }
+            default: return -2;
+        }
     }
 }
