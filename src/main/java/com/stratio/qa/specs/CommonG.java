@@ -66,6 +66,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
@@ -73,6 +74,9 @@ import java.util.regex.Pattern;
 
 import static com.stratio.qa.assertions.Assertions.assertThat;
 import static org.testng.Assert.fail;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
@@ -1479,14 +1483,62 @@ public class CommonG {
                 //Check the headers values
                 assertThat(expectedRow.keySet()).overridingErrorMessage("The headers do not match").isEqualTo(obtainedRow.keySet());
                 //Now, we are going to check the values
-                assertThat(expectedRow).overridingErrorMessage("The content of the obtained row %s is different from obtainerd", i).isEqualTo(obtainedRow);
+                Set<String> keys = expectedRow.keySet();
+                for (String key : keys) {
+                    if (expectedRow.get(key).contains("regex") || expectedRow.get(key).contains("not_check")) {
+                        if (expectedRow.get(key).contains("regex-timestamp")) {
+                            String[] format = expectedRow.get(key).split("_");
+                            assertThat(true).overridingErrorMessage("The values of key %s and %s line are not a valid timestamp", expectedRow.get(key), i).isEqualTo(isThisDateValid(obtainedRow.get(key), format[1]));
+                        }
+                        if (expectedRow.get(key).contains("regex-uuid")) {
+                            assertThat(true).overridingErrorMessage("The values of key %s and %s line are not an UIDD", expectedRow.get(key), i).isEqualTo(isUUID(obtainedRow.get(key)));
+                        }
+                    } else {
+                        assertThat(expectedRow.get(key)).overridingErrorMessage("The values of key %s and %s line are not equals", expectedRow.get(key), i).isEqualTo(obtainedRow.get(key));
+                    }
+                }
             }
         } else {
             throw new Exception("You must execute a query before trying to get results");
         }
     }
 
+    /**
+     * Check if a string is a UUID
+     * @param uuid - UUID value
+     * @return true if it is a UUID or false if it is not an UUID
+     */
+    private boolean isUUID(String uuid) {
+        try {
+            UUID.fromString(uuid);
+            return true;
+        } catch (Exception ex) {
+            return false;
+        }
+    }
 
+    /**
+     * Check is a String is a valid timestamp format
+     * @param dateToValidate
+     * @param dateFromat
+     * @return true/false
+     */
+    private boolean isThisDateValid(String dateToValidate, String dateFromat) {
+        if (dateToValidate == null) {
+            return false;
+        }
+        SimpleDateFormat sdf = new SimpleDateFormat(dateFromat);
+        sdf.setLenient(false);
+        try {
+            //if not valid, it will throw ParseException
+            Date date = sdf.parse(dateToValidate);
+            System.out.println(date);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
     /**
      * Checks the different results of a previous query to Cassandra database
      *
