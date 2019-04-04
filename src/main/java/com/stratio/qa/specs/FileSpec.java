@@ -45,9 +45,24 @@ public class FileSpec extends BaseGSpec {
      *
      * @param csvFile
      */
-    @When("^I read info from csv file '(.+?)'$")
-    public void readFromCSV(String csvFile) throws Exception {
-        CsvReader rows = new CsvReader(csvFile);
+    @When("^I read info from csv file '(.+?)' with separator '(.+?)'$")
+    public void readFromCSV(String csvFile, String separator) throws Exception {
+        //By default separator is a coma
+        char sep = ',';
+        if (separator.length() > 1) {
+            switch (separator) {
+                case "\\t":
+                    sep = '\t';
+                    break;
+                default:
+                    sep = ',';
+                    break;
+            }
+        } else {
+            sep = separator.charAt(0);
+        }
+
+        CsvReader rows = new CsvReader(csvFile, sep);
 
         String[] columns = null;
         if (rows.readRecord()) {
