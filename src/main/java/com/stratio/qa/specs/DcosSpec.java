@@ -17,6 +17,7 @@
 package com.stratio.qa.specs;
 
 import com.auth0.jwt.JWTSigner;
+import com.jayway.jsonpath.JsonPath;
 import com.ning.http.client.Response;
 import com.stratio.qa.utils.GosecSSOUtils;
 import com.stratio.qa.utils.RemoteSSHConnection;
@@ -24,7 +25,6 @@ import com.stratio.qa.utils.ThreadProperty;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
-import org.apache.commons.collections.map.HashedMap;
 import org.assertj.core.api.Assertions;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -33,8 +33,6 @@ import java.util.*;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import com.jayway.jsonpath.JsonPath;
 
 import static com.stratio.qa.assertions.Assertions.assertThat;
 
@@ -315,8 +313,8 @@ public class DcosSpec extends BaseGSpec {
     /**
      * Check if json is validated against a schema
      *
-     * @param json    json to be validated against schema
-     * @param schema  schema to be validated against
+     * @param json   json to be validated against schema
+     * @param schema schema to be validated against
      * @throws Exception exception     *
      */
     @Given("^json (.+?) matches schema (.+?)$")
@@ -330,9 +328,9 @@ public class DcosSpec extends BaseGSpec {
     /**
      * Get service status
      *
-     * @param service   name of the service to be checked
-     * @param cluster   URI of the cluster
-     * @param envVar    environment variable where to store result
+     * @param service name of the service to be checked
+     * @param cluster URI of the cluster
+     * @param envVar  environment variable where to store result
      * @throws Exception exception     *
      */
     @Given("^I get service '(.+?)' status in cluster '(.+?)' and save it in variable '(.+?)'")
@@ -345,9 +343,9 @@ public class DcosSpec extends BaseGSpec {
     /**
      * Get service health status
      *
-     * @param service   name of the service to be checked
-     * @param cluster   URI of the cluster
-     * @param envVar    environment variable where to store result
+     * @param service name of the service to be checked
+     * @param cluster URI of the cluster
+     * @param envVar  environment variable where to store result
      * @throws Exception exception     *
      */
     @Given("^I get service '(.+?)' health status in cluster '(.+?)' and save it in variable '(.+?)'")
@@ -360,8 +358,8 @@ public class DcosSpec extends BaseGSpec {
     /**
      * Destroy specified service
      *
-     * @param service   name of the service to be destroyed
-     * @param cluster   URI of the cluster
+     * @param service name of the service to be destroyed
+     * @param cluster URI of the cluster
      * @throws Exception exception     *
      */
     @Given("^I destroy service '(.+?)' in cluster '(.+?)'")
@@ -453,9 +451,9 @@ public class DcosSpec extends BaseGSpec {
     /**
      * Check service status has value specified
      *
-     * @param service   name of the service to be checked
-     * @param cluster   URI of the cluster
-     * @param status    status expected
+     * @param service name of the service to be checked
+     * @param cluster URI of the cluster
+     * @param status  status expected
      * @throws Exception exception     *
      */
     @Then("^service '(.+?)' status in cluster '(.+?)' is '(suspended|running|deploying)'( in less than '(\\d+?)' seconds checking every '(\\d+?)' seconds)?")
@@ -483,9 +481,9 @@ public class DcosSpec extends BaseGSpec {
     /**
      * Check service health status has value specified
      *
-     * @param service   name of the service to be checked
-     * @param cluster   URI of the cluster
-     * @param status    health status expected
+     * @param service name of the service to be checked
+     * @param cluster URI of the cluster
+     * @param status  health status expected
      * @throws Exception exception     *
      */
     @Then("^service '(.+?)' health status in cluster '(.+?)' is '(unhealthy|healthy|unknown)'( in less than '(\\d+?)' seconds checking every '(\\d+?)' seconds)?")
@@ -528,11 +526,11 @@ public class DcosSpec extends BaseGSpec {
     /**
      * Check if a role of a service complies the established constraints
      *
-     * @param role    name of role of a service
-     * @param service    name of service of exhibitor
+     * @param role        name of role of a service
+     * @param service     name of service of exhibitor
      * @param instance    name of instance of a service
      * @param constraints all stablished contraints separated by a semicolumn.
-     *                       Example: constraint1,constraint2,...
+     *                    Example: constraint1,constraint2,...
      * @throws Exception
      */
     @Then("^The role '(.+?)' of the service '(.+?)' with instance '(.+?)' complies the constraints '(.+?)'$")
@@ -558,7 +556,7 @@ public class DcosSpec extends BaseGSpec {
     }
 
     public void checkConstraint(String role, String service, String instance, String tag, String constraint, String value) throws Exception {
-        RestSpec  restspec = new RestSpec(commonspec);
+        RestSpec restspec = new RestSpec(commonspec);
         restspec.sendRequestTimeout(100, 5, "GET", "/exhibitor/exhibitor/v1/explorer/node-data?key=%2Fdatastore%2F" + service + "%2F" + instance + "%2Fplan-v2-json&_=", "so that the response contains", null, "str");
         MiscSpec miscspec = new MiscSpec(commonspec);
         miscspec.saveElementEnvironment(null, null, "$.str", "exhibitor_answer");
@@ -582,7 +580,78 @@ public class DcosSpec extends BaseGSpec {
         }
     }
 
-    private void selectElements (String role, String service, String element) throws Exception {
+    /**
+     * @param role   name of role of a service
+     * @param IP     Ip of the machine from which you want to save the nodes
+     * @param envVar environment variable where store nodes
+     * @throws Exception
+     */
+    @When("^I save nodes '(.+?)' that are in machine '(.+?)' in environment variable '(.+?)'$")
+    public void saveNodes(String role, String IP, String envVar) throws Exception {
+        selectElements(role, "pbd", "agent_hostname", IP, envVar);
+    }
+
+    /**
+     * @param role        name of role of a service
+     * @param envVar      environment variable where before you save nodes
+     * @param foo         parameter generated by cucumber because of the optional expression
+     * @param envVar2     environment variable when you want to check slave nodes
+     * @param timeout     Same RestSpec.sendRequest
+     * @param wait        Same RestSpec.sendRequest
+     * @param requestType Same RestSpec.sendRequest
+     * @param endPoint    Same RestSpec.sendRequest
+     * @param status      Same RestSpec.sendRequest
+     * @throws Exception
+     */
+    @Then("^I check status of nodes '(.+?)' using environment variable '(.+?)'(,'(.+?)')? in less than '(\\d+?)' seconds, checking each '(\\d+?)' seconds, I send a '(.+?)' request to '(.+?)' checking status '(.+?)' of nodes$")
+    public void checkProxyNodesStatus(String role, String envVar, String foo, String envVar2, Integer timeout, Integer wait, String requestType, String endPoint, String status) throws Exception {
+
+        String estadoNodo = "";
+
+        RestSpec restspec = new RestSpec(commonspec);
+
+        //datanodes
+        selectElements(role, "pbd", "name");
+        String[] dataNodes = ThreadProperty.get("elementsConstraint").split("\"\"");
+
+        //Si tenemos algún DataNode caído, chequeamos los datanodeSlave de ese dataNode
+        if (role.contains("datanode_slave") && envVar2 != null) {
+
+            for (int i = 0; i < dataNodes.length; i++) {
+
+                if (dataNodes[i].split("_")[1].contains(ThreadProperty.get(envVar2).split("_")[1])) {
+                    estadoNodo = status;
+                } else {
+                    estadoNodo = "RUNNING";
+                }
+                restspec.sendRequestTimeout(timeout, wait, requestType, endPoint, dataNodes[i], "", "\"" + dataNodes[i] + "\",\"role\":\"" + role + "\",\"status\":\"" + estadoNodo + "\"");
+            }
+
+        } else {
+            for (int i = 0; i < dataNodes.length; i++) {
+                if (dataNodes[i].contains(ThreadProperty.get(envVar)) && !ThreadProperty.get(envVar).isEmpty()) {
+                    estadoNodo = status;
+                } else {
+                    estadoNodo = "RUNNING";
+                }
+                restspec.sendRequestTimeout(timeout, wait, requestType, endPoint, dataNodes[i], "", "\"" + dataNodes[i] + "\",\"role\":\"" + role + "\",\"status\":\"" + estadoNodo + "\"");
+            }
+        }
+
+
+    }
+
+
+    public void selectElements(String role, String service, String element, String elementValue, String envValue) throws Exception {
+        CommandExecutionSpec commandexecutionspec = new CommandExecutionSpec(commonspec);
+        Assertions.assertThat(service).overridingErrorMessage("Error while parsing arguments. The service must be community, pbd or zookeeper").isIn("community", "zookeeper", "pbd");
+        int pos = selectExhibitorRole(role, service);
+        Assertions.assertThat(pos).overridingErrorMessage("Error while parsing arguments. The role " + role + " of the service " + service + " doesn't exist").isNotEqualTo(-1);
+        commandexecutionspec.executeLocalCommand("echo '" + ThreadProperty.get("exhibitor_answer") + "' | jq '.phases[" + pos + "].\"000" + (pos + 1) + "\".steps[][] | select(.status | contains(\"RUNNING\")) | select(." + element + " | contains(\"" + elementValue + "\")).name' | sed '1 s/^\"//g' | sed '$ s/\"$//g'", " with exit status ", 0, " and save the value in environment variable ", envValue);
+    }
+
+
+    private void selectElements(String role, String service, String element) throws Exception {
         CommandExecutionSpec commandexecutionspec = new CommandExecutionSpec(commonspec);
         Assertions.assertThat(service).overridingErrorMessage("Error while parsing arguments. The service must be community, pbd or zookeeper").isIn("community", "zookeeper", "pbd");
         int pos = selectExhibitorRole(role, service);
@@ -590,7 +659,7 @@ public class DcosSpec extends BaseGSpec {
         commandexecutionspec.executeLocalCommand("echo '" + ThreadProperty.get("exhibitor_answer") + "' | jq '.phases[" + Integer.toString(pos) + "].\"000" + Integer.toString(pos + 1) + "\".steps[][] | select(.status | contains(\"RUNNING\"))." + element + "' | sed '1 s/^\"//g' | sed '$ s/\"$//g'", " with exit status ", 0, " and save the value in environment variable ", "elementsConstraint");
     }
 
-    public void checkConstraintType (String role, String instance, String tag, String constraint, String value, String[] elements) throws Exception {
+    public void checkConstraintType(String role, String instance, String tag, String constraint, String value, String[] elements) throws Exception {
         Pattern p = value != null ? Pattern.compile(value) : null;
         Matcher m;
         switch (constraint) {
@@ -667,7 +736,7 @@ public class DcosSpec extends BaseGSpec {
         }
     }
 
-    public void checkConstraintClusterValueIs (String role, String instance, String tag, String constraint, String value, String[] elements) throws Exception {
+    public void checkConstraintClusterValueIs(String role, String instance, String tag, String constraint, String value, String[] elements) throws Exception {
         for (int i = 0; i < elements.length; i++) {
             for (int j = i + 1; j < elements.length; j++) {
                 Assertions.assertThat(elements[i]).overridingErrorMessage("The role " + role + " of the instance " + instance + " doesn't complies the established constraint " + tag + ":" + constraint + ":" + value).isEqualTo(elements[j]);
@@ -680,29 +749,45 @@ public class DcosSpec extends BaseGSpec {
         switch (service) {
             case "community":
                 switch (role) {
-                    case "master": return 0;
-                    case "sync_slave": return 1;
-                    case "async_slave": return 2;
-                    case "agent": return 3;
-                    default: return -1;
+                    case "master":
+                        return 0;
+                    case "sync_slave":
+                        return 1;
+                    case "async_slave":
+                        return 2;
+                    case "agent":
+                        return 3;
+                    default:
+                        return -1;
                 }
             case "pbd":
                 switch (role) {
-                    case "gtm": return 0;
-                    case "gtm_slave": return 1;
-                    case "gtm_proxy": return 2;
-                    case "datanode": return 3;
-                    case "datanode_slave": return 4;
-                    case "coordinator": return 5;
-                    case "agent": return 6;
-                    default: return -1;
+                    case "gtm":
+                        return 0;
+                    case "gtm_slave":
+                        return 1;
+                    case "gtm_proxy":
+                        return 2;
+                    case "datanode":
+                        return 3;
+                    case "datanode_slave":
+                        return 4;
+                    case "coordinator":
+                        return 5;
+                    case "agent":
+                        return 6;
+                    default:
+                        return -1;
                 }
             case "zookeeper":
                 switch (role) {
-                    case "zkNode": return 0;
-                    default: return -1;
+                    case "zkNode":
+                        return 0;
+                    default:
+                        return -1;
                 }
-            default: return -2;
+            default:
+                return -2;
         }
     }
 }
