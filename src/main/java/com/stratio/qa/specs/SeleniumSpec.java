@@ -25,17 +25,18 @@ import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import org.assertj.core.api.Assertions;
-import org.openqa.selenium.By;
-import org.openqa.selenium.Cookie;
-import org.openqa.selenium.Keys;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 
 import java.util.*;
 
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import static com.stratio.qa.assertions.Assertions.assertThat;
+import static org.testng.Assert.fail;
 
 /**
  * Generic Selenium Specs.
@@ -188,6 +189,26 @@ public class SeleniumSpec extends BaseGSpec {
     }
 
     /**
+     * Dragging element with offset
+     * @param smethod
+     * @param source
+     * @param xOffset
+     * @param yOffset
+     * @throws ClassNotFoundException
+     * @throws NoSuchFieldException
+     * @throws SecurityException
+     * @throws IllegalArgumentException
+     * @throws IllegalAccessException
+     */
+    @When("I move element with '([^:]*?):(.+?)', '(-?\\d+)' pixels horizontally and '(\\d+?)' pixels vertically$")
+    public void seleniumDragOffset(String smethod, String source, int xOffset, int yOffset) throws ClassNotFoundException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+        Actions builder = new Actions(commonspec.getDriver());
+        List<WebElement> sourceElement = commonspec.locateElement(smethod, source, 1);
+        builder.dragAndDropBy(sourceElement.get(0), xOffset, yOffset).perform();
+    }
+
+
+    /**
      * Click on an numbered {@code url} previously found element.
      *
      * @param index
@@ -299,6 +320,46 @@ public class SeleniumSpec extends BaseGSpec {
                 text = text.substring(text.indexOf("\\n") + 2);
             }
         }
+    }
+
+    /**
+     * Paste text on {@code text}
+     * @param jsSelector example: div #id_div a .a_class
+     * @param text
+     */
+    @Given("^I type on element '(.+?)' the following text '(.+?)'")
+    public void seleniumAppend(@Transform(NullableStringConverter.class) String jsSelector, @Transform(NullableStringConverter.class) String text) {
+        WebDriver driver = commonspec.getDriver();
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        js.executeScript("document.querySelector('" + jsSelector + "').value = '" + text + "'");
+    }
+
+    /**
+     * Wait for render a html element
+     * @param method
+     * @param element
+     * @param timeout
+     */
+    @When("^I wait for element '([^:]*?):(.+?)' to be available for '(\\d+?)' seconds$")
+    public void seleniumWait(String method, String element, Integer timeout) {
+        RemoteWebDriver driver = commonspec.getDriver();
+        WebDriverWait driverWait = new WebDriverWait(driver, timeout);
+        By criteriaSel = null;
+        if ("id".equals(method)) {
+            criteriaSel = By.id(element);
+        } else if ("name".equals(method)) {
+            criteriaSel = By.name(element);
+        } else if ("class".equals(method)) {
+            criteriaSel = By.className(element);
+        } else if ("xpath".equals(method)) {
+            criteriaSel = By.xpath(element);
+        } else if ("css".equals(method)) {
+            criteriaSel = By.cssSelector(element);
+        } else {
+            fail("Unknown search method: " + method);
+        }
+        driverWait.until(ExpectedConditions.
+                presenceOfElementLocated(criteriaSel));
     }
 
     /**
