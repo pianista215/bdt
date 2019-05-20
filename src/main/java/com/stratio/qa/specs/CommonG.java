@@ -39,6 +39,8 @@ import com.ning.http.client.cookie.Cookie;
 import com.stratio.qa.conditions.Conditions;
 import com.stratio.qa.utils.*;
 import cucumber.api.DataTable;
+import cucumber.api.Scenario;
+import cucumber.api.java.Before;
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.io.FileUtils;
 import org.assertj.core.api.Assertions;
@@ -138,6 +140,13 @@ public class CommonG {
     private Optional<SearchResult> previousLdapResults;
 
     private Connection myConnection = null;
+
+    private Scenario scenario;
+
+    @Before
+    public void before(Scenario scenario) {
+        this.scenario = scenario;
+    }
 
     /**
      * Checks if a given string matches a regular expression or contains a string
@@ -495,6 +504,7 @@ public class CommonG {
             }
             try {
                 FileUtils.copyFile(file, new File(outputFile));
+                addPngFileToReport(file);
             } catch (IOException e) {
                 logger.error("Exception on copying browser screen capture", e);
             }
@@ -603,6 +613,22 @@ public class CommonG {
     private Integer getDocumentHeight(WebDriver driver) {
         WebElement body = driver.findElement(By.tagName("html"));
         return body.getSize().getHeight();
+    }
+
+    /**
+     * Add png file to cucumber report (it's embed on scenario)
+     *
+     * @param pngFile Screenshot file
+     */
+    private void addPngFileToReport(File pngFile) {
+        try {
+            BufferedImage bImage = ImageIO.read(pngFile);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ImageIO.write(bImage, "png", bos);
+            scenario.embed(bos.toByteArray(), "image/png");
+        } catch (IOException e) {
+            logger.error("Error adding screenshot in cucumber report", e);
+        }
     }
 
     /**
