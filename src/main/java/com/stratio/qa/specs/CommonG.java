@@ -40,7 +40,6 @@ import com.stratio.qa.conditions.Conditions;
 import com.stratio.qa.utils.*;
 import cucumber.api.DataTable;
 import cucumber.api.Scenario;
-import cucumber.api.java.Before;
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.io.FileUtils;
 import org.assertj.core.api.Assertions;
@@ -77,10 +76,8 @@ import java.util.regex.Pattern;
 import static com.stratio.qa.assertions.Assertions.assertThat;
 import static org.testng.Assert.fail;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
 
 public class CommonG {
@@ -140,13 +137,6 @@ public class CommonG {
     private Optional<SearchResult> previousLdapResults;
 
     private Connection myConnection = null;
-
-    private Scenario scenario;
-
-    @Before
-    public void before(Scenario scenario) {
-        this.scenario = scenario;
-    }
 
     /**
      * Checks if a given string matches a regular expression or contains a string
@@ -413,8 +403,8 @@ public class CommonG {
      * @param type   type
      * @return String
      */
-    public String captureEvidence(WebDriver driver, String type) {
-        return captureEvidence(driver, type, "");
+    public String captureEvidence(WebDriver driver, String type, Scenario scenario) {
+        return captureEvidence(driver, type, "", scenario);
     }
 
     /**
@@ -425,7 +415,7 @@ public class CommonG {
      * @param suffix suffix
      * @return String
      */
-    public String captureEvidence(WebDriver driver, String type, String suffix) {
+    public String captureEvidence(WebDriver driver, String type, String suffix, Scenario scenario) {
         String testSuffix = System.getProperty("TESTSUFFIX");
         String dir = "./target/executions/";
         if (testSuffix != null) {
@@ -504,7 +494,7 @@ public class CommonG {
             }
             try {
                 FileUtils.copyFile(file, new File(outputFile));
-                addPngFileToReport(file);
+                addPngFileToReport(file, scenario);
             } catch (IOException e) {
                 logger.error("Exception on copying browser screen capture", e);
             }
@@ -620,14 +610,16 @@ public class CommonG {
      *
      * @param pngFile Screenshot file
      */
-    private void addPngFileToReport(File pngFile) {
-        try {
-            BufferedImage bImage = ImageIO.read(pngFile);
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ImageIO.write(bImage, "png", bos);
-            scenario.embed(bos.toByteArray(), "image/png");
-        } catch (IOException e) {
-            logger.error("Error adding screenshot in cucumber report", e);
+    private void addPngFileToReport(File pngFile, Scenario scenario) {
+        if (scenario != null) {
+            try {
+                BufferedImage bImage = ImageIO.read(pngFile);
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                ImageIO.write(bImage, "png", bos);
+                scenario.embed(bos.toByteArray(), "image/png");
+            } catch (IOException e) {
+                logger.error("Error adding screenshot in cucumber report", e);
+            }
         }
     }
 

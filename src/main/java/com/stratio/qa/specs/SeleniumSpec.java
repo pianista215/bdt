@@ -20,7 +20,9 @@ import com.stratio.qa.cucumber.converter.ArrayListConverter;
 import com.stratio.qa.cucumber.converter.NullableStringConverter;
 import com.stratio.qa.utils.PreviousWebElements;
 import com.stratio.qa.utils.ThreadProperty;
+import cucumber.api.Scenario;
 import cucumber.api.Transform;
+import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
@@ -43,6 +45,8 @@ import static org.testng.Assert.fail;
  */
 public class SeleniumSpec extends BaseGSpec {
 
+    private Scenario scenario;
+
     /**
      * Generic constructor.
      *
@@ -51,6 +55,11 @@ public class SeleniumSpec extends BaseGSpec {
     public SeleniumSpec(CommonG spec) {
         this.commonspec = spec;
 
+    }
+
+    @Before
+    public void before(Scenario scenario) {
+        this.scenario = scenario;
     }
 
     /**
@@ -601,7 +610,7 @@ public class SeleniumSpec extends BaseGSpec {
      */
     @Then("^I take a snapshot$")
     public void seleniumSnapshot() throws Exception {
-        commonspec.captureEvidence(commonspec.getDriver(), "screenCapture");
+        commonspec.captureEvidence(commonspec.getDriver(), "screenCapture", scenario);
     }
 
     /**
