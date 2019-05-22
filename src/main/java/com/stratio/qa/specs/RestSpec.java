@@ -22,6 +22,7 @@ import cucumber.api.DataTable;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
+import cucumber.deps.com.thoughtworks.xstream.mapper.Mapper;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.WritableAssertionInfo;
 import org.json.JSONArray;
@@ -226,6 +227,112 @@ public class RestSpec extends BaseGSpec {
         commonspec.setResponse(requestType, response.get());
     }
 
+
+    /**
+     * Creates a custom resource in gosec management if the resource doesn't exist
+     *
+     * @param resource
+     * @param resourceId    (userId, groupId or policyId)
+     * @param endPoint
+     * @param foo
+     * @param loginInfo
+     * @param DoesNotExist  (if 'empty', creation is forced deleting the previous policy if exists)
+     * @param baseData
+     * @param baz
+     * @param type
+     * @param modifications
+     * @throws Exception
+     */
+    @When("^I create '(.+?)' '(.+?)' in endpoint '(.+?)'( with user and password '(.+:.+?)')?( if it does not exist)? based on '([^:]+?)'( as '(json|string|gov)')? with:$")
+    public void createResourceIfNotExist(String resource, String resourceId, String endPoint, String foo, String loginInfo, String DoesNotExist, String baseData, String baz, String type, DataTable modifications) throws Exception {
+
+        Integer expectedStatusCreate = new Integer(201);
+        Integer expectedStatusDelete = new Integer(200);
+        String endPointResource = endPoint + "/" + resourceId;
+
+        try {
+            assertThat(commonspec.getRestHost().isEmpty() || commonspec.getRestPort().isEmpty());
+
+            sendRequestNoDataTable("GET", endPointResource, foo, loginInfo, null, null, null, null);
+
+            if (commonspec.getResponse().getStatusCode() != 200) {
+                sendRequest("POST", endPoint, foo, loginInfo, baseData, baz, type, modifications);
+                try {
+                    if (commonspec.getResponse().getStatusCode() == 409) {
+                        commonspec.getLogger().warn("The resource {} already exists", resourceId);
+                    } else {
+                        assertThat(commonspec.getResponse().getStatusCode()).isEqualTo(expectedStatusCreate);
+                        commonspec.getLogger().warn("Resource {} created", resourceId);
+                    }
+                } catch (Exception e) {
+                    commonspec.getLogger().warn("Error creating user {}: {}", resourceId, commonspec.getResponse().getResponse());
+                    throw e;
+                }
+            } else {
+                if (resource.equals("policy") && commonspec.getResponse().getStatusCode() == 200) {
+                    if (DoesNotExist != null) {
+                        //Policy already exists
+                        commonspec.getLogger().warn("Policy {} already exist - not created", resourceId);
+
+                    } else {
+                        //Delete policy if exists
+                        sendRequest("DELETE", endPointResource, foo, loginInfo, baseData, baz, type, modifications);
+                        commonspec.getLogger().warn("Policy {} deleted", resourceId);
+
+                        try {
+                            assertThat(commonspec.getResponse().getStatusCode()).isEqualTo(expectedStatusDelete);
+                        } catch (Exception e) {
+                            commonspec.getLogger().warn("Error deleting Policy {}: {}", resourceId, commonspec.getResponse().getResponse());
+                            throw e;
+                        }
+                        createResourceIfNotExist(resource, resourceId, endPoint, foo, loginInfo, DoesNotExist, baseData, baz, type, modifications);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            commonspec.getLogger().error("Rest Host or Rest Port are not initialized {}{}", commonspec.getRestHost(), commonspec.getRestPort());
+            throw e;
+        }
+    }
+
+    /**
+     * Deletes a resource in gosec management if the resourceId exists previously.
+     *
+     * @param resource
+     * @param resourceId
+     * @param endPoint
+     * @param foo
+     * @param loginInfo
+     * @throws Exception
+     */
+    @When("^I delete '(.+?) '(.+?)' in endpoint '(.+?)'( with user and password '(.+:.+?)')? if it exists$")
+    public void deleteUserIfExists(String resource, String resourceId, String endPoint, String foo, String loginInfo) throws Exception {
+        Integer expectedStatusDelete = new Integer(200);
+        String endPointResource = endPoint + "/" + resourceId;
+
+        try {
+            assertThat(commonspec.getRestHost().isEmpty() || commonspec.getRestPort().isEmpty());
+
+            sendRequestNoDataTable("GET", endPointResource, foo, loginInfo, null, null, null, null);
+
+            if (commonspec.getResponse().getStatusCode() == 200) {
+                //Delete user if exists
+                sendRequestNoDataTable("DELETE", endPointResource, foo, loginInfo, null, null, null, null);
+                commonspec.getLogger().warn("Resource {} deleted", resourceId);
+
+                try {
+                    assertThat(commonspec.getResponse().getStatusCode()).isEqualTo(expectedStatusDelete);
+                } catch (Exception e) {
+                    commonspec.getLogger().warn("Error deleting Resource {}: {}", resourceId, commonspec.getResponse().getResponse());
+                    throw e;
+                }
+            }
+        } catch (Exception e) {
+            commonspec.getLogger().error("Rest Host or Rest Port are not initialized {}: {}", commonspec.getRestHost(), commonspec.getRestPort());
+            throw e;
+        }
+    }
+
     /**
      * Same sendRequest, but in this case, we do not receive a data table with modifications.
      * Besides, the data and request header are optional as well.
@@ -240,7 +347,8 @@ public class RestSpec extends BaseGSpec {
      * @throws Exception
      */
     @When("^I send a '(.+?)' request to '(.+?)'( with user and password '(.+:.+?)')?( based on '([^:]+?)')?( as '(json|string|gov)')?$")
-    public void sendRequestNoDataTable(String requestType, String endPoint, String foo, String loginInfo, String bar, String baseData, String baz, String type) throws Exception {
+    public void sendRequestNoDataTable(String requestType, String endPoint, String foo, String loginInfo, String
+            bar, String baseData, String baz, String type) throws Exception {
         Future<Response> response;
         String user = null;
         String password = null;
@@ -276,7 +384,8 @@ public class RestSpec extends BaseGSpec {
      * @throws Exception
      */
     @When("^in less than '(\\d+?)' seconds, checking each '(\\d+?)' seconds, I send a '(.+?)' request to '(.+?)'( so that the response( does not)? contains '(.+?)')?$")
-    public void sendRequestTimeout(Integer timeout, Integer wait, String requestType, String endPoint, String foo, String contains, String responseVal) throws Exception {
+    public void sendRequestTimeout(Integer timeout, Integer wait, String requestType, String endPoint, String
+            foo, String contains, String responseVal) throws Exception {
 
         AssertionError ex = null;
         String type = "";
@@ -363,18 +472,21 @@ public class RestSpec extends BaseGSpec {
     }
 
     @Then("^the service response must contain the text '(.*?)'$")
-    public void assertResponseMessage(String expectedText) throws ClassNotFoundException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+    public void assertResponseMessage(String expectedText) throws
+            ClassNotFoundException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         Pattern pattern = CommonG.matchesOrContains(expectedText);
         assertThat(commonspec.getResponse().getResponse()).containsPattern(pattern);
     }
 
     @Then("^the service response must not contain the text '(.*?)'$")
-    public void assertNegativeResponseMessage(String expectedText) throws ClassNotFoundException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+    public void assertNegativeResponseMessage(String expectedText) throws
+            ClassNotFoundException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         assertThat(commonspec.getResponse().getResponse()).doesNotContain(expectedText);
     }
 
     @Then("^the service response status must be '(.*?)'( and its response length must be '(.*?)' | and its response must contain the text '(.*?)')?$")
-    public void assertResponseStatusLength(Integer expectedStatus, String foo, Integer expectedLength, String expectedText) {
+    public void assertResponseStatusLength(Integer expectedStatus, String foo, Integer expectedLength, String
+            expectedText) {
         if (foo != null) {
             if (foo.contains("length")) {
                 assertThat(Optional.of(commonspec.getResponse())).hasValueSatisfying(r -> {
