@@ -6,7 +6,7 @@ Only listing significant user-visible, not internal code cleanups and minor bug 
 
 * Pending changelog
 
-## 0.10.0 (upcoming)
+## 0.10.0 (May 23, 2019)
 
 * [QATM-2137] Fix array json governance
 * [QATM-2139] add new tests for modifyData with arrays
