@@ -79,28 +79,28 @@ public class RunOnEnvTagAspectTest {
     public void testCheckVersion() throws Exception {
         System.setProperty("VERSION","1.0_0-1.0.0");
         assertThatExceptionOfType(Exception.class).isThrownBy(() -> runontag.checkParams(runontag.getParams("@runOnEnv(VERSION>1.0.0-1.0)")))
-                .withMessage("Error while parsing params. The versions have some characters that are not numbers, '.' or '-'");
+                .withMessage("Error while parsing params. The versions have some characters that are not numbers, '.' or '-' or an invalid format");
     }
 
     @Test
     public void testCheckVersion_2() throws Exception {
         System.setProperty("VERSION","1.0.0@1.0.0");
         assertThatExceptionOfType(Exception.class).isThrownBy(() -> runontag.checkParams(runontag.getParams("@runOnEnv(VERSION>1.0.0-1.0)")))
-                .withMessage("Error while parsing params. The versions have some characters that are not numbers, '.' or '-'");
+                .withMessage("Error while parsing params. The versions have some characters that are not numbers, '.' or '-' or an invalid format");
     }
 
     @Test
     public void testCheckVersion_3() throws Exception {
         System.setProperty("VERSION","1.0.0-1.0.0");
         assertThatExceptionOfType(Exception.class).isThrownBy(() -> runontag.checkParams(runontag.getParams("@runOnEnv(VERSION>1.0.*)")))
-                .withMessage("Error while parsing params. The versions have some characters that are not numbers, '.' or '-'");
+                .withMessage("Error while parsing params. The versions have some characters that are not numbers, '.' or '-' or an invalid format");
     }
 
     @Test
     public void testCheckVersion_4() throws Exception {
         System.setProperty("VERSION","1.0.0-1.0.0");
         assertThatExceptionOfType(Exception.class).isThrownBy(() -> runontag.checkParams(runontag.getParams("@runOnEnv(VERSION>1.0.0-0.5.15-/+-)")))
-                .withMessage("Error while parsing params. The versions have some characters that are not numbers, '.' or '-'");
+                .withMessage("Error while parsing params. The versions have some characters that are not numbers, '.' or '-' or an invalid format");
     }
 
     @Test
@@ -2456,5 +2456,134 @@ public class RunOnEnvTagAspectTest {
         System.setProperty("HELLO","OK");
         System.setProperty("NOTEXIST","1.0.0");
         assertThat(true).isEqualTo(runontag.checkParams(runontag.getParams("@runOnEnv(HELLO=OK||NOTEXIST>0.1.0)")));
+    }
+
+    @Test
+    public void testTagIterationWithPrereleaseVersion() throws Exception {
+        System.setProperty("VERSION","1.0.1-2xXxAzx");
+        List<PickleTag> tagList = new ArrayList<>();
+        tagList.add(new PickleTag(new PickleLocation(1,0),"@runOnEnv(VERSION>1.0.0)"));
+        assertThat(false).isEqualTo(runontag.tagsIteration(tagList,1));
+    }
+
+    @Test
+    public void testTagIterationWithPrereleaseVersion2() throws Exception {
+        System.setProperty("VERSION","1.0.1-AxXxAzx-1.0.0");
+        List<PickleTag> tagList = new ArrayList<>();
+        tagList.add(new PickleTag(new PickleLocation(1,0),"@runOnEnv(VERSION>1.0.0-1.0.0)"));
+        assertThat(false).isEqualTo(runontag.tagsIteration(tagList,1));
+    }
+
+    @Test
+    public void testTagIterationWithPrereleaseVersion3() throws Exception {
+        System.setProperty("VERSION","1.0.1-cxXxAzx-1.0.0-1.0.0");
+        List<PickleTag> tagList = new ArrayList<>();
+        tagList.add(new PickleTag(new PickleLocation(1,0),"@runOnEnv(VERSION>1.0.0-1.0.0-1.0.0)"));
+        assertThat(false).isEqualTo(runontag.tagsIteration(tagList,1));
+    }
+
+    @Test
+    public void testTagIterationWithPrereleaseVersion4() throws Exception {
+        System.setProperty("VERSION","1.0.1-1.0.0-x3XxAzx");
+        List<PickleTag> tagList = new ArrayList<>();
+        tagList.add(new PickleTag(new PickleLocation(1,0),"@runOnEnv(VERSION>1.0.0-1.0.0)"));
+        assertThat(false).isEqualTo(runontag.tagsIteration(tagList,1));
+    }
+
+    @Test
+    public void testTagIterationWithPrereleaseVersion5() throws Exception {
+        System.setProperty("VERSION","1.0.1-1.0.0-x2XxAzx-1.0.0");
+        List<PickleTag> tagList = new ArrayList<>();
+        tagList.add(new PickleTag(new PickleLocation(1,0),"@runOnEnv(VERSION>1.0.0-1.0.0-1.0.0)"));
+        assertThat(false).isEqualTo(runontag.tagsIteration(tagList,1));
+    }
+
+    @Test
+    public void testTagIterationWithPrereleaseVersion6() throws Exception {
+        System.setProperty("VERSION","1.0.1-1.0.0-1.0.0-xXxAzx1");
+        List<PickleTag> tagList = new ArrayList<>();
+        tagList.add(new PickleTag(new PickleLocation(1,0),"@runOnEnv(VERSION>1.0.0-1.0.0-1.0.0)"));
+        assertThat(false).isEqualTo(runontag.tagsIteration(tagList,1));
+    }
+
+    @Test
+    public void testTagIterationWithPrereleaseVersion7() throws Exception {
+        System.setProperty("VERSION","1.0.1-1234567-1.0.0-11aa22w-1.0.0-xXx2Azx");
+        List<PickleTag> tagList = new ArrayList<>();
+        tagList.add(new PickleTag(new PickleLocation(1,0),"@runOnEnv(VERSION>1.0.0-1.0.0-1.0.0)"));
+        assertThat(false).isEqualTo(runontag.tagsIteration(tagList,1));
+    }
+
+    @Test
+    public void testTagIterationWithSnapshotVersion() throws Exception {
+        System.setProperty("VERSION","1.0.1-SNAPSHOT");
+        List<PickleTag> tagList = new ArrayList<>();
+        tagList.add(new PickleTag(new PickleLocation(1,0),"@runOnEnv(VERSION>1.0.0)"));
+        assertThat(false).isEqualTo(runontag.tagsIteration(tagList,1));
+    }
+
+    @Test
+    public void testTagIterationWithRCVersion() throws Exception {
+        System.setProperty("VERSION","1.0.1-RC1");
+        List<PickleTag> tagList = new ArrayList<>();
+        tagList.add(new PickleTag(new PickleLocation(1,0),"@runOnEnv(VERSION>1.0.0)"));
+        assertThat(false).isEqualTo(runontag.tagsIteration(tagList,1));
+    }
+
+    @Test
+    public void testTagIterationWithMilestoneVersion() throws Exception {
+        System.setProperty("VERSION","1.0.1-M3");
+        List<PickleTag> tagList = new ArrayList<>();
+        tagList.add(new PickleTag(new PickleLocation(1,0),"@runOnEnv(VERSION>1.0.0)"));
+        assertThat(false).isEqualTo(runontag.tagsIteration(tagList,1));
+    }
+
+    @Test
+    public void testPrereleaseNotAllowedInRunOnEnv() throws Exception {
+        System.setProperty("VERSION","1.0.0");
+        assertThatExceptionOfType(Exception.class).isThrownBy(() -> runontag.checkParams(runontag.getParams("@runOnEnv(VERSION>1.0.0-xxxxxxx)")))
+                .withMessage("Error while parsing params. The versions have some characters that are not numbers, '.' or '-' or an invalid format");
+    }
+
+    @Test
+    public void testInvalidSnapshotVersionInRunOnEnv() throws Exception {
+        System.setProperty("VERSION","1.0.0-SNAPSHOT1");
+        assertThatExceptionOfType(Exception.class).isThrownBy(() -> runontag.checkParams(runontag.getParams("@runOnEnv(VERSION>1.0.0)")))
+                .withMessage("Error while parsing params. The versions have some characters that are not numbers, '.' or '-' or an invalid format");
+    }
+
+    @Test
+    public void testInvalidSnapshotVersionInRunOnEnv2() throws Exception {
+        System.setProperty("VERSION","1.0.0-SNAPSHOT1-1.0.0");
+        assertThatExceptionOfType(Exception.class).isThrownBy(() -> runontag.checkParams(runontag.getParams("@runOnEnv(VERSION>1.0.0-1.0.0)")))
+                .withMessage("Error while parsing params. The versions have some characters that are not numbers, '.' or '-' or an invalid format");
+    }
+
+    @Test
+    public void testInvalidRCVersionInRunOnEnv() throws Exception {
+        System.setProperty("VERSION","1.0.0-RC14");
+        assertThatExceptionOfType(Exception.class).isThrownBy(() -> runontag.checkParams(runontag.getParams("@runOnEnv(VERSION>1.0.0)")))
+                .withMessage("Error while parsing params. The versions have some characters that are not numbers, '.' or '-' or an invalid format");
+    }
+
+    @Test
+    public void testInvalidRCVersionInRunOnEnv2() throws Exception {
+        System.setProperty("VERSION","1.0.0-RC14-1.0.0");
+        assertThatExceptionOfType(Exception.class).isThrownBy(() -> runontag.checkParams(runontag.getParams("@runOnEnv(VERSION>1.0.0-1.0.0)")))
+                .withMessage("Error while parsing params. The versions have some characters that are not numbers, '.' or '-' or an invalid format");
+    }
+
+    @Test
+    public void testInvalidMilestoneVersionInRunOnEnv() throws Exception {
+        System.setProperty("VERSION","1.0.0-M14");
+        assertThatExceptionOfType(Exception.class).isThrownBy(() -> runontag.checkParams(runontag.getParams("@runOnEnv(VERSION>1.0.0)")))
+                .withMessage("Error while parsing params. The versions have some characters that are not numbers, '.' or '-' or an invalid format");
+    }
+
+    @Test
+    public void testInvalidMilestoneVersionInRunOnEnv2() throws Exception {
+        System.setProperty("VERSION","1.0.0-M14-1.0.0");
+        assertThatExceptionOfType(Exception.class).isThrownBy(() -> runontag.checkParams(runontag.getParams("@runOnEnv(VERSION>1.0.0-1.0.0)")))
+                .withMessage("Error while parsing params. The versions have some characters that are not numbers, '.' or '-' or an invalid format");
     }
 }

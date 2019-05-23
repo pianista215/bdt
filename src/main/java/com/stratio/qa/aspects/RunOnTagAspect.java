@@ -268,11 +268,12 @@ public class RunOnTagAspect {
     private boolean checkVersion(char operador, String param, String value) throws Exception {
         boolean result = true;
         String regexp = "^[[[0-9]+.]+[0-9]+][-[[0-9]+.]+[0-9]+]*";
-        if (!Pattern.matches(regexp, System.getProperty(param)) || !Pattern.matches(regexp, value)) {
-            throw new Exception("Error while parsing params. The versions have some characters that are not numbers, '.' or '-'");
+        String envVarValue = System.getProperty(param).replaceAll("-(SNAPSHOT|[a-zA-Z0-9]{7}|M[1-9]|RC[1-9])[0-9]", "error").replaceAll("-(SNAPSHOT|[a-zA-Z0-9]{7}|M[1-9]|RC[1-9])", "");
+        if (!Pattern.matches(regexp, envVarValue) || !Pattern.matches(regexp, value)) {
+            throw new Exception("Error while parsing params. The versions have some characters that are not numbers, '.' or '-' or an invalid format");
         } else if (operador == '=') {
-            if (value.contains("-") || System.getProperty(param).contains("-")) {
-                String[] paramversion = System.getProperty(param).split("-");
+            if (value.contains("-") || envVarValue.contains("-")) {
+                String[] paramversion = envVarValue.split("-");
                 String[] valueversion = value.split("-");
                 if (paramversion.length != valueversion.length) {
                     result = false;
@@ -296,7 +297,7 @@ public class RunOnTagAspect {
                     }
                 }
             } else {
-                String[] parver = System.getProperty(param).split("\\.");
+                String[] parver = envVarValue.split("\\.");
                 String[] valver = value.split("\\.");
                 if (parver.length != valver.length) {
                     result = false;
@@ -311,8 +312,8 @@ public class RunOnTagAspect {
                 }
             }
         } else {
-            if ((value.contains("-") || System.getProperty(param).contains("-"))) {
-                String[] paramversion = System.getProperty(param).split("-");
+            if ((value.contains("-") || envVarValue.contains("-"))) {
+                String[] paramversion = envVarValue.split("-");
                 String[] valueversion = value.split("-");
                 if (operador == '>' && paramversion.length < valueversion.length) {
                     result = false;
@@ -357,7 +358,7 @@ public class RunOnTagAspect {
                     }
                 }
             } else {
-                String[] parver = System.getProperty(param).split("\\.");
+                String[] parver = envVarValue.split("\\.");
                 String[] valver = value.split("\\.");
                 if (parver.length != valver.length) {
                     throw new Exception("Error while parsing params. The versions must have the same number of elements");

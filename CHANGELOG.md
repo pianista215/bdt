@@ -4,7 +4,20 @@ Only listing significant user-visible, not internal code cleanups and minor bug 
 
 ## 0.10.0 (upcoming)
 
-* Pending changelog
+* [QATM-2137] Fix array json governance
+* [QATM-2139] add new tests for modifyData with arrays
+* [QATM-2181] new steps for sftp module
+* [QATM-2187] Add ignite specs path to cucumber glue
+* [LDG-123] Refactor resultMustBeCSV and added test
+* [QATM-1901] Add charset=UTF-8 in content-type headers
+* [QATM-2178] New step to check if a role of a service complies the established constraints
+* [LDG-240] Improve CSV file matcher for random values
+* [QATM-2118] New proxy steps added
+* [SPARTA-2328] New selenium features (for Intell and Sparta)
+* [QATM-2273] Add screenshot to cucumber-report
+* [QATM-2302] Fix NPE when module has custom specs
+* [QATM-2303] Create user,policy and groups if they don exist previously
+* [QATM-2333] Ignore pre-release suffix in versions sent as parameter
 
 ## 0.9.0 (February 25, 2019)
 
