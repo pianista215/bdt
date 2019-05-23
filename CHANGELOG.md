@@ -2,6 +2,10 @@
 
 Only listing significant user-visible, not internal code cleanups and minor bug fixes.
 
+## 0.11.0 (upcoming)
+
+* Pending changelog
+
 ## 0.10.0 (upcoming)
 
 * [QATM-2137] Fix array json governance
