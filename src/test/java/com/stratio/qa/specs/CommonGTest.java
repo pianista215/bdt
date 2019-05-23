@@ -18,7 +18,7 @@ package com.stratio.qa.specs;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.Response;
 import com.stratio.qa.utils.ThreadProperty;
-import cucumber.api.DataTable;
+import io.cucumber.datatable.DataTable;
 import org.hjson.JsonObject;
 import org.hjson.JsonValue;
 import org.hjson.ParseException;
@@ -31,10 +31,7 @@ import org.testng.annotations.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 
@@ -856,7 +853,7 @@ public class CommonGTest {
         String type = "string";
 
         try {
-            commong.generateRequest(requestType, false, null, null, endPoint, data, type, "");
+            commong.generateRequest(requestType, false, null, null, endPoint, data, type);
             fail("Expected Exception");
         } catch (Exception e) {
             assertThat(e.getClass().toString()).as("Unexpected exception").isEqualTo(Exception.class.toString());
@@ -877,7 +874,7 @@ public class CommonGTest {
             commong.setRestHost("localhost");
             commong.setRestPort("80");
 
-            commong.generateRequest(requestType, false, null, null, endPoint, data, type, "");
+            commong.generateRequest(requestType, false, null, null, endPoint, data, type);
             fail("Expected Exception");
         } catch (Exception e) {
             assertThat(e.getClass().toString()).as("Unexpected exception").isEqualTo(Exception.class.toString());
@@ -897,7 +894,7 @@ public class CommonGTest {
         try {
             commong.setRestHost("localhost");
             commong.setRestPort("80");
-            commong.generateRequest(requestType, false, null, null, endPoint, data, type, "");
+            commong.generateRequest(requestType, false, null, null, endPoint, data, type);
             fail("Expected Exception");
         } catch (Exception e) {
             assertThat(e.getClass().toString()).as("Unexpected exception").isEqualTo(Exception.class.toString());
@@ -916,7 +913,7 @@ public class CommonGTest {
         try {
             commong.setRestHost("localhost");
             commong.setRestPort("80");
-            commong.generateRequest(requestType, false, null, null, endPoint, null, type, "");
+            commong.generateRequest(requestType, false, null, null, endPoint, null, type);
             fail("Expected Exception");
         } catch (Exception e) {
             assertThat(e.getClass().toString()).as("Unexpected exception").isEqualTo(Exception.class.toString());
@@ -935,7 +932,7 @@ public class CommonGTest {
         try {
             commong.setRestHost("localhost");
             commong.setRestPort("80");
-            commong.generateRequest(requestType, false, null, null, endPoint, null, type, "");
+            commong.generateRequest(requestType, false, null, null, endPoint, null, type);
             fail("Expected Exception");
         } catch (Exception e) {
             assertThat(e.getClass().toString()).as("Unexpected exception").isEqualTo(Exception.class.toString());
@@ -1683,5 +1680,59 @@ public class CommonGTest {
 
         String modifiedData = commong.modifyData(data, type, modifications);
         JSONAssert.assertEquals(expectedData, modifiedData, false);
+    }
+
+    @Test
+    public void csvTest() throws Exception {
+        ThreadProperty.set("class", this.getClass().getCanonicalName());
+        CommonG commong = new CommonG();
+
+        List<Map<String, String>> csvResults = new ArrayList<Map<String, String>>();
+        Map<String, String> row = new HashMap<String, String>();
+        row.put("id", "1");
+        row.put("name", "aaa");
+        row.put("value", "test");
+        csvResults.add(row);
+
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("id", "name", "value"), Arrays.asList("1", "aaa", "test"));
+        DataTable csvList = DataTable.create(rawData);
+
+        commong.setCSVResults(csvResults);
+        commong.resultsMustBeCSV(csvList);
+    }
+
+    @Test
+    public void csvExceptionTest() {
+        ThreadProperty.set("class", this.getClass().getCanonicalName());
+        CommonG commong = new CommonG();
+
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("id", "name", "value"), Arrays.asList("1", "aaa", "test"));
+        DataTable csvList = DataTable.create(rawData);
+
+        try {
+            commong.resultsMustBeCSV(csvList);
+            org.testng.Assert.fail("Expected Exception");
+        } catch (Exception e) {
+            assertThat(e.getMessage()).as("CSV Results not setted").isEqualTo("You must execute a query before trying to get results");
+        }
+    }
+
+    @Test
+    public void csvRegexTest() throws Exception {
+        ThreadProperty.set("class", this.getClass().getCanonicalName());
+        CommonG commong = new CommonG();
+
+        List<Map<String, String>> csvResults = new ArrayList<Map<String, String>>();
+        Map<String, String> row = new HashMap<String, String>();
+        row.put("id", "0");
+        row.put("uuid", "c83d3a0b-0d4d-474d-aed5-bd407a3e5ae8");
+        row.put("date", "2019-04-03 09:23:23.763");
+        csvResults.add(row);
+
+        List<List<String>> rawData = Arrays.asList(Arrays.asList("id", "uuid", "date"), Arrays.asList("0", "regex-uuid", "regex-timestamp_yyyy-MM-dd HH:mm:ss.SSS"));
+        DataTable csvList = DataTable.create(rawData);
+
+        commong.setCSVResults(csvResults);
+        commong.resultsMustBeCSV(csvList);
     }
 }

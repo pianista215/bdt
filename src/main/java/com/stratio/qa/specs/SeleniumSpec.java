@@ -16,12 +16,10 @@
 
 package com.stratio.qa.specs;
 
-import com.stratio.qa.cucumber.converter.ArrayListConverter;
-import com.stratio.qa.cucumber.converter.NullableStringConverter;
+import com.stratio.qa.cucumber.converter.Strokes;
 import com.stratio.qa.utils.PreviousWebElements;
 import com.stratio.qa.utils.ThreadProperty;
 import cucumber.api.Scenario;
-import cucumber.api.Transform;
 import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
@@ -121,7 +119,7 @@ public class SeleniumSpec extends BaseGSpec {
     /**
      * Switches to a frame/ iframe.
      */
-    @Given("^I switch to the iframe on index '(\\d+?)'$")
+    @Given("^I switch to the iframe on index '(\\d+)'$")
     public void seleniumSwitchFrame(Integer index) {
 
         assertThat(commonspec.getPreviousWebElements()).as("There are less found elements than required")
@@ -199,8 +197,7 @@ public class SeleniumSpec extends BaseGSpec {
 
     /**
      * Dragging element with offset
-     * @param smethod
-     * @param source
+     * @param element
      * @param xOffset
      * @param yOffset
      * @throws ClassNotFoundException
@@ -209,13 +206,16 @@ public class SeleniumSpec extends BaseGSpec {
      * @throws IllegalArgumentException
      * @throws IllegalAccessException
      */
-    @When("I move element with '([^:]*?):(.+?)', '(-?\\d+)' pixels horizontally and '(\\d+?)' pixels vertically$")
-    public void seleniumDragOffset(String smethod, String source, int xOffset, int yOffset) throws ClassNotFoundException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+    @When("I move element with {string}, '{int}' pixels horizontally and '{int}' pixels vertically")
+    public void seleniumDragOffset(String element, Integer xOffset, Integer yOffset) throws ClassNotFoundException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+        String[] elementArray = element.split(":");
+        if (elementArray.length != 2) {
+            fail("Element argument doesn't match regex: ([^:]*?):(.+?) [" + element + "]");
+        }
         Actions builder = new Actions(commonspec.getDriver());
-        List<WebElement> sourceElement = commonspec.locateElement(smethod, source, 1);
+        List<WebElement> sourceElement = commonspec.locateElement(elementArray[0], elementArray[1], 1);
         builder.dragAndDropBy(sourceElement.get(0), xOffset, yOffset).perform();
     }
-
 
     /**
      * Click on an numbered {@code url} previously found element.
@@ -223,7 +223,7 @@ public class SeleniumSpec extends BaseGSpec {
      * @param index
      * @throws InterruptedException
      */
-    @When("^I click on the element on index '(\\d+?)'$")
+    @When("^I click on the element on index '(\\d+)'$")
     public void seleniumClick(Integer index) throws InterruptedException {
 
         try {
@@ -244,7 +244,7 @@ public class SeleniumSpec extends BaseGSpec {
      * @param index
      * @throws InterruptedException
      */
-    @When("^I double click on the element on index '(\\d+?)'$")
+    @When("^I double click on the element on index '(\\d+)'$")
     public void seleniumDoubleClick(Integer index) throws InterruptedException {
         Actions action = new Actions(commonspec.getDriver());
         try {
@@ -265,7 +265,7 @@ public class SeleniumSpec extends BaseGSpec {
      *
      * @param index
      */
-    @When("^I clear the content on text input at index '(\\d+?)'$")
+    @When("^I clear the content on text input at index '(\\d+)'$")
     public void seleniumClear(Integer index) {
         assertThat(this.commonspec, commonspec.getPreviousWebElements()).as("There are less found elements than required")
                 .hasAtLeast(index);
@@ -281,8 +281,8 @@ public class SeleniumSpec extends BaseGSpec {
      *
      * @param index
      */
-    @When("^I delete the text '(.+?)' on the element on index '(\\d+?)'( and replace it for '(.+?)')?$")
-    public void seleniumDelete(String text, Integer index, String foo, String replacement) {
+    @When("^I delete the text '(.+?)' on the element on index '(\\d+)'( and replace it for '(.+?)')?$")
+    public void seleniumDelete(String text, Integer index, String replacement) {
         assertThat(this.commonspec, commonspec.getPreviousWebElements()).as("There are less found elements than required")
                 .hasAtLeast(index);
 
@@ -309,8 +309,8 @@ public class SeleniumSpec extends BaseGSpec {
      * @param text
      * @param index
      */
-    @When("^I type '(.+?)' on the element on index '(\\d+?)'$")
-    public void seleniumType(@Transform(NullableStringConverter.class) String text, Integer index) {
+    @When("I type '{nullablestring}' on the element on index '{int}'")
+    public void seleniumType(String text, Integer index) {
         assertThat(this.commonspec, commonspec.getPreviousWebElements()).as("There are less found elements than required")
                 .hasAtLeast(index);
         while (text.length() > 0) {
@@ -336,8 +336,8 @@ public class SeleniumSpec extends BaseGSpec {
      * @param jsSelector example: div #id_div a .a_class
      * @param text
      */
-    @Given("^I type on element '(.+?)' the following text '(.+?)'")
-    public void seleniumAppend(@Transform(NullableStringConverter.class) String jsSelector, @Transform(NullableStringConverter.class) String text) {
+    @Given("I type on element '{nullablestring}' the following text '{nullablestring}'")
+    public void seleniumAppend(String jsSelector, String text) {
         WebDriver driver = commonspec.getDriver();
         JavascriptExecutor js = (JavascriptExecutor) driver;
         js.executeScript("document.querySelector('" + jsSelector + "').value = '" + text + "'");
@@ -347,10 +347,11 @@ public class SeleniumSpec extends BaseGSpec {
      * Wait for render a html element
      * @param method
      * @param element
-     * @param timeout
+     * @param sTimeout
      */
     @When("^I wait for element '([^:]*?):(.+?)' to be available for '(\\d+?)' seconds$")
-    public void seleniumWait(String method, String element, Integer timeout) {
+    public void seleniumWait(String method, String element, String sTimeout) {
+        Integer timeout = sTimeout != null ? Integer.parseInt(sTimeout) : null;
         RemoteWebDriver driver = commonspec.getDriver();
         WebDriverWait driverWait = new WebDriverWait(driver, timeout);
         By criteriaSel = null;
@@ -381,19 +382,20 @@ public class SeleniumSpec extends BaseGSpec {
      * DIVIDE, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, META, COMMAND, ZENKAKU_HANKAKU) , a plus sign (+), a
      * comma (,) or spaces ( )
      *
-     * @param strokes
-     * @param foo
-     * @param index
+     * @param sStrokes
+     * @param sIndex
      */
-    @When("^I send '(.+?)'( on the element on index '(\\d+?)')?$")
-    public void seleniumKeys(@Transform(ArrayListConverter.class) List<String> strokes, String foo, Integer index) {
+    @When("^I send '(.+?)'( on the element on index '(\\d+)')?$")
+    public void seleniumKeys(String sStrokes, String sIndex) {
+        Strokes strokes = new Strokes(sStrokes);
+        Integer index = sIndex != null ? Integer.valueOf(sIndex) : null;
         if (index != null) {
             assertThat(this.commonspec, commonspec.getPreviousWebElements()).as("There are less found elements than required")
                     .hasAtLeast(index);
         }
-        assertThat(strokes).isNotEmpty();
+        assertThat(strokes.getStrokesList()).isNotEmpty();
 
-        for (String stroke : strokes) {
+        for (String stroke : strokes.getStrokesList()) {
             if (stroke.contains("+")) {
                 List<Keys> csl = new ArrayList<Keys>();
                 for (String strokeInChord : stroke.split("\\+")) {
@@ -421,7 +423,7 @@ public class SeleniumSpec extends BaseGSpec {
      * @param option
      * @param index
      */
-    @When("^I select '(.+?)' on the element on index '(\\d+?)'$")
+    @When("^I select '(.+?)' on the element on index '(\\d+)'$")
     public void elementSelect(String option, Integer index) {
         Select sel = null;
         sel = new Select(commonspec.getPreviousWebElements().getPreviousWebElements().get(index));
@@ -434,7 +436,7 @@ public class SeleniumSpec extends BaseGSpec {
      *
      * @param index
      */
-    @When("^I de-select every item on the element on index '(\\d+?)'$")
+    @When("^I de-select every item on the element on index '(\\d+)'$")
     public void elementDeSelect(Integer index) {
         Select sel = null;
         sel = new Select(commonspec.getPreviousWebElements().getPreviousWebElements().get(index));
@@ -457,7 +459,6 @@ public class SeleniumSpec extends BaseGSpec {
                 commonspec.getDriver().switchTo().window(window);
             }
         }
-
     }
 
     /**
@@ -466,7 +467,7 @@ public class SeleniumSpec extends BaseGSpec {
      * @param index
      * @param text
      */
-    @Then("^the element on index '(\\d+?)' has '(.+?)' as text$")
+    @Then("^the element on index '(\\d+)' has '(.+?)' as text$")
     public void assertSeleniumTextOnElementPresent(Integer index, String text) {
         assertThat(commonspec.getPreviousWebElements()).as("There are less found elements than required")
                 .hasAtLeast(index);
@@ -502,7 +503,7 @@ public class SeleniumSpec extends BaseGSpec {
      * @throws NoSuchFieldException
      * @throws ClassNotFoundException
      */
-    @Then("^'(\\d+?)' elements? exists? with '([^:]*?):(.+?)'$")
+    @Then("^'(\\d+)' elements? exists? with '([^:]*?):(.+?)'$")
     public void assertSeleniumNElementExists(Integer expectedCount, String method, String element) throws ClassNotFoundException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         List<WebElement> wel = commonspec.locateElement(method, element, expectedCount);
         PreviousWebElements pwel = new PreviousWebElements(wel);
@@ -526,7 +527,7 @@ public class SeleniumSpec extends BaseGSpec {
      * @throws NoSuchFieldException
      * @throws ClassNotFoundException
      */
-    @Then("^in less than '(\\d+?)' seconds, checking each '(\\d+?)' seconds, '(\\d+?)' elements exists with '([^:]*?):(.+?)'$")
+    @Then("^in less than '(\\d+)' seconds, checking each '(\\d+)' seconds, '(\\d+)' elements exists with '([^:]*?):(.+?)'$")
     public void assertSeleniumNElementExistsOnTimeOut(Integer timeout, Integer wait, Integer expectedCount,
                                                       String method, String element) throws InterruptedException, ClassNotFoundException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         List<WebElement> wel = null;
@@ -551,7 +552,7 @@ public class SeleniumSpec extends BaseGSpec {
      * @param index
      * @param isDisplayed
      */
-    @Then("^the element on index '(\\d+?)' (IS|IS NOT) displayed$")
+    @Then("the element on index '{int}' {isornot} displayed")
     public void assertSeleniumIsDisplayed(Integer index, Boolean isDisplayed) {
         assertThat(this.commonspec, commonspec.getPreviousWebElements()).as("There are less found elements than required")
                 .hasAtLeast(index);
@@ -565,7 +566,7 @@ public class SeleniumSpec extends BaseGSpec {
      * @param index
      * @param isEnabled
      */
-    @Then("^the element on index '(\\d+?)' (IS|IS NOT) enabled$")
+    @Then("the element on index '{int}' {isornot} enabled")
     public void assertSeleniumIsEnabled(Integer index, Boolean isEnabled) {
         assertThat(this.commonspec, commonspec.getPreviousWebElements()).as("There are less found elements than required")
                 .hasAtLeast(index);
@@ -579,7 +580,7 @@ public class SeleniumSpec extends BaseGSpec {
      * @param index
      * @param isSelected
      */
-    @Then("^the element on index '(\\d+?)' (IS|IS NOT) selected$")
+    @Then("the element on index '{int}' {isornot} selected")
     public void assertSeleniumIsSelected(Integer index, Boolean isSelected) {
         assertThat(this.commonspec, commonspec.getPreviousWebElements()).as("There are less found elements than required")
                 .hasAtLeast(index);
@@ -594,7 +595,7 @@ public class SeleniumSpec extends BaseGSpec {
      * @param attribute
      * @param value
      */
-    @Then("^the element on index '(\\d+?)' has '(.+?)' as '(.+?)'$")
+    @Then("^the element on index '(\\d+)' has '(.+?)' as '(.+?)'$")
     public void assertSeleniumHasAttributeValue(Integer index, String attribute, String value) {
         assertThat(this.commonspec, commonspec.getPreviousWebElements()).as("There are less found elements than required")
                 .hasAtLeast(index);
@@ -621,7 +622,6 @@ public class SeleniumSpec extends BaseGSpec {
      */
     @Then("^we are in page '(.+?)'$")
     public void checkURL(String url) throws Exception {
-
         if (commonspec.getWebHost() == null) {
             throw new Exception("Web host has not been set");
         }
@@ -689,14 +689,13 @@ public class SeleniumSpec extends BaseGSpec {
     @Then("^The cookie '(.+?)' exists in the saved cookies$")
     public void checkIfCookieExists(String cookieName) {
         Assertions.assertThat(commonspec.cookieExists(cookieName)).isEqualTo(true);
-
     }
     /**
      * Check if the length of the cookie set match with the number of cookies thas must be saved
      *
      * @param numberOfCookies number of cookies that must be saved
      */
-    @Then("^I have '(.+?)' selenium cookies saved$")
+    @Then("^I have '(\\d+)' selenium cookies saved$")
     public void getSeleniumCookiesSize(int numberOfCookies) throws Exception {
         Assertions.assertThat(commonspec.getSeleniumCookies().size()).isEqualTo(numberOfCookies);
     }
@@ -707,7 +706,7 @@ public class SeleniumSpec extends BaseGSpec {
      * @param index  position of the element in the array of webElements found
      * @param envVar name of the thread environment variable where to store the text
      */
-    @Then("^I save content of element in index '(\\d+?)' in environment variable '(.+?)'$")
+    @Then("^I save content of element in index '(\\d+)' in environment variable '(.+?)'$")
     public void saveContentWebElementInEnvVar(Integer index, String envVar) {
         assertThat(this.commonspec, commonspec.getPreviousWebElements()).as("There are less found elements than required")
                 .hasAtLeast(index);

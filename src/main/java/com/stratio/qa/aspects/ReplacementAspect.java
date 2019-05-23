@@ -23,13 +23,11 @@ import com.stratio.qa.specs.CommonG;
 import com.stratio.qa.specs.HookGSpec;
 import com.stratio.qa.utils.ExceptionList;
 import com.stratio.qa.utils.ThreadProperty;
+import cucumber.api.PickleStepTestStep;
 import cucumber.api.Result.Type;
 import cucumber.api.Scenario;
-import cucumber.runner.PickleTestStep;
-import cucumber.runner.TimeService;
+import cucumber.runner.EventBus;
 import cucumber.runtime.*;
-import cucumber.runtime.Runtime;
-import cucumber.runtime.io.ResourceLoader;
 import gherkin.events.PickleEvent;
 import gherkin.pickles.*;
 import gherkin.pickles.Argument;
@@ -61,19 +59,33 @@ public class ReplacementAspect {
 
     private Glue glue;
 
+    private List<String> undefinedSteps = new ArrayList<>();
+
     private String lastEchoedStep = "";
 
-    @Pointcut("execution (cucumber.runtime.Runtime.new(..)) && "
-            + "args (resourceLoader, classLoader, backends, runtimeOptions, stopWatch, optionalGlue)")
-    protected void runtimeInit(ResourceLoader resourceLoader, ClassLoader classLoader, Collection<? extends Backend> backends, RuntimeOptions runtimeOptions, TimeService stopWatch, Glue optionalGlue) {
+    @Pointcut("execution (cucumber.runner.Runner.new(..)) && "
+            + "args (glue, bus, backends, runtimeOptions)")
+    protected void runnerInit(Glue glue, EventBus bus, Collection<? extends Backend> backends, RuntimeOptions runtimeOptions) {
     }
 
-    @After(value = "runtimeInit(resourceLoader, classLoader, backends, runtimeOptions, stopWatch, optionalGlue)")
-    public void runtimeInitGlue(JoinPoint jp, ResourceLoader resourceLoader, ClassLoader classLoader, Collection<? extends Backend> backends, RuntimeOptions runtimeOptions, TimeService stopWatch, Glue optionalGlue) throws Throwable {
-        Runtime runtime = (Runtime) jp.getTarget();
-        glue = runtime.getGlue();
+    @After(value = "runnerInit(glue, bus, backends, runtimeOptions)")
+    public void runnerInitGlue(JoinPoint jp, Glue glue, EventBus bus, Collection<? extends Backend> backends, RuntimeOptions runtimeOptions) throws Throwable {
+        this.glue = glue;
     }
 
+    @Pointcut("execution (* cucumber.runtime.DefaultSummaryPrinter.printSnippets(..))")
+    protected void print() {
+    }
+
+    @Around(value = "print()")
+    public void printSnippets(ProceedingJoinPoint pjp) throws Throwable {
+        if (!undefinedSteps.isEmpty()) {
+            logger.error("The following steps are undefined:");
+            for (String undefinedStep:undefinedSteps) {
+                logger.error("    {}", undefinedStep);
+            }
+        }
+    }
 
     @Pointcut("execution (* cucumber.runner.Runner.runPickle(..)) && "
             + "args (pickle)")
@@ -105,18 +117,19 @@ public class ReplacementAspect {
         }
     }
 
-    @Pointcut("execution (* cucumber.api.TestStep.executeStep(..)) && "
+    @Pointcut("execution (* cucumber.runner.TestStep.executeStep(..)) && "
             + "args (language, scenario, skipSteps)")
     protected void replacementStar(String language, Scenario scenario, boolean skipSteps) {
     }
 
     @Around(value = "replacementStar(language, scenario, skipSteps)")
     public Type aroundReplacementStar(ProceedingJoinPoint pjp, String language, Scenario scenario, boolean skipSteps) throws Throwable {
-        if (pjp.getTarget() instanceof PickleTestStep) {
-            PickleTestStep pickleTestStep = (PickleTestStep) pjp.getTarget();
+        if (pjp.getTarget() instanceof PickleStepTestStep) {
+            PickleStepTestStep pickleTestStep = (PickleStepTestStep) pjp.getTarget();
             PickleStep step = pickleTestStep.getPickleStep();
 
             // Replace elements in datatable
+            StringBuilder sbDataTable = new StringBuilder();
             List<Argument> argumentList = new ArrayList<>(step.getArgument());
             for (int a = 0; a < argumentList.size(); a++) {
                 if (argumentList.get(a) instanceof PickleTable) {
@@ -125,11 +138,14 @@ public class ReplacementAspect {
                     for (int r = 0; r < pickleRowList.size(); r++) {
                         PickleRow pickleRow = pickleRowList.get(r);
                         List<PickleCell> pickleCellList = new ArrayList<>(pickleRow.getCells());
+                        sbDataTable.append("| ");
                         for (int c = 0; c < pickleCellList.size(); c++) {
                             PickleCell pickleCell = pickleCellList.get(c);
                             pickleCellList.set(c, new PickleCell(pickleCell.getLocation(), replacedElement(pickleCell.getValue(), pjp)));
+                            sbDataTable.append(pickleCellList.get(c).getValue()).append(" | ");
                         }
                         pickleRowList.set(r, new PickleRow(pickleCellList));
+                        sbDataTable.append("\n");
                     }
                     pickleTable = new PickleTable(pickleRowList);
                     argumentList.set(a, pickleTable);
@@ -155,7 +171,7 @@ public class ReplacementAspect {
                 } while ((current = current.getSuperclass()) != null);
 
                 field.setAccessible(true);
-                field.set(step, newName);
+                field.set(step, newName.replaceAll("(\\r|\\n|\\r\\n)+", "\\\\n"));
                 scenario.write(newName);
             }
             step = new PickleStep(step.getText(), argumentList, step.getLocations());
@@ -164,6 +180,9 @@ public class ReplacementAspect {
             lastEchoedStep = pickleTestStep.getStepText();
             if (HookGSpec.loggerEnabled) {
                 logger.info("  {}{}", keyword, newName);
+                if (!sbDataTable.toString().isEmpty()) {
+                    logger.info("  {}", sbDataTable.toString());
+                }
             }
 
             // Run step
@@ -178,6 +197,11 @@ public class ReplacementAspect {
                         return Type.SKIPPED;
                     }
                 } else {
+                    logger.error("Undefined step!! {}", newName);
+                    String undefinedStep = scenario.getUri() + " # " + newName;
+                    if (!undefinedSteps.contains(undefinedStep)) {
+                        undefinedSteps.add(undefinedStep);
+                    }
                     return Type.UNDEFINED;
                 }
             } catch (AmbiguousStepDefinitionsException asde) {

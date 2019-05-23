@@ -28,7 +28,7 @@ Feature: Selenium run test
     When '1' elements exists with 'id:loginIntroDefault'
     Then '1' elements exists with 'id:j_username'
     And I run 'echo "soy un texto"' locally with exit status '0' and save the value in environment variable 'testvar'
-    When I type on element '#j_username' with the following text '!{testvar}'
+    When I type on element '#j_username' the following text '!{testvar}'
     When I wait '2' seconds
     And I clear the content on text input at index '0'
     When I wait '2' seconds

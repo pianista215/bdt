@@ -33,3 +33,4 @@ Feature: Simple run test
   Scenario: Default exit status - Check output
     When I run 'ls -la /tmp' in the ssh connection
     Then the command output contains 'total'
+    Then the command output does not contain 'totalnotcontain'

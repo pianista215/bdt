@@ -16,7 +16,7 @@
 package com.stratio.qa.specs;
 
 import com.stratio.qa.utils.ThreadProperty;
-import cucumber.api.DataTable;
+import io.cucumber.datatable.DataTable;
 import org.testng.annotations.Test;
 
 import java.nio.file.Files;
@@ -43,7 +43,7 @@ public class MiscTest {
         MiscSpec misc = new MiscSpec(commong);
 
         try {
-            misc.saveElementEnvironment(null, null, jsonString.concat(".$.[0]"), envVar);
+            misc.saveElementEnvironment(null, jsonString.concat(".$.[0]"), envVar);
         } catch (Exception e) {
             fail("Error parsing JSON String");
         }

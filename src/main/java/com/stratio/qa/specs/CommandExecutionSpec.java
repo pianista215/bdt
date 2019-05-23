@@ -50,7 +50,7 @@ public class CommandExecutionSpec extends BaseGSpec {
      * @throws Exception exception
      */
     @Given("^I open a ssh connection to '(.+?)'( in port '(.+?)')? with user '(.+?)'( and password '(.+?)')?( using pem file '(.+?)')?$")
-    public void openSSHConnection(String remoteHost, String tmp, String remotePort, String user, String foo, String password, String bar, String pemFile) throws Exception {
+    public void openSSHConnection(String remoteHost, String remotePort, String user, String password, String pemFile) throws Exception {
         if ((pemFile == null) || (pemFile.equals("none"))) {
             if (password == null) {
                 throw new Exception("You have to provide a password or a pem file to be used for connection");
@@ -98,14 +98,13 @@ public class CommandExecutionSpec extends BaseGSpec {
      * Executes the command specified in local system
      *
      * @param command    command to be run locally
-     * @param foo        regex needed to match method
-     * @param exitStatus command exit status
-     * @param bar        regex needed to match method
+     * @param sExitStatus command exit status
      * @param envVar     environment variable name
      * @throws Exception exception
      **/
-    @Given("^I run '(.+?)' locally( with exit status '(.+?)')?( and save the value in environment variable '(.+?)')?$")
-    public void executeLocalCommand(String command, String foo, Integer exitStatus, String bar, String envVar) throws Exception {
+    @Given("^I run '(.+?)' locally( with exit status '(\\d+)')?( and save the value in environment variable '(.+?)')?$")
+    public void executeLocalCommand(String command, String sExitStatus, String envVar) throws Exception {
+        Integer exitStatus = sExitStatus != null ? Integer.valueOf(sExitStatus) : null;
         if (exitStatus == null) {
             exitStatus = 0;
         }
@@ -120,14 +119,13 @@ public class CommandExecutionSpec extends BaseGSpec {
      * Executes the command specified in remote system
      *
      * @param command    command to be run locally
-     * @param foo        regex needed to match method
-     * @param exitStatus command exit status
-     * @param bar        regex needed to match method
+     * @param sExitStatus command exit status
      * @param envVar     environment variable name
      * @throws Exception exception
      **/
     @Given("^I run '(.+?)' in the ssh connection( with exit status '(.+?)')?( and save the value in environment variable '(.+?)')?$")
-    public void executeCommand(String command, String foo, Integer exitStatus, String bar, String envVar) throws Exception {
+    public void executeCommand(String command, String sExitStatus, String envVar) throws Exception {
+        Integer exitStatus = sExitStatus != null ? Integer.valueOf(sExitStatus) : null;
         if (exitStatus == null) {
             exitStatus = 0;
         }
@@ -146,10 +144,12 @@ public class CommandExecutionSpec extends BaseGSpec {
      * @param wait
      * @param command
      * @param search
+     * @param sExitStatus
      * @throws InterruptedException
      */
-    @Then("^in less than '(\\d+?)' seconds, checking each '(\\d+?)' seconds, the command output '(.+?)' contains '(.+?)'( with exit status '(.+?)')?$")
-    public void assertCommandExistsOnTimeOut(Integer timeout, Integer wait, String command, String search, String foo, Integer exitStatus) throws Exception {
+    @Then("^in less than '(\\d+)' seconds, checking each '(\\d+)' seconds, the command output '(.+?)' contains '(.+?)'( with exit status '(\\d+)')?$")
+    public void assertCommandExistsOnTimeOut(Integer timeout, Integer wait, String command, String search, String sExitStatus) throws Exception {
+        Integer exitStatus = sExitStatus != null ? Integer.valueOf(sExitStatus) : null;
         Boolean found = false;
         AssertionError ex = null;
         command = "set -o pipefail && alias grep='grep --color=never' && " + command;
@@ -216,8 +216,8 @@ public class CommandExecutionSpec extends BaseGSpec {
      * needed anymore.
      **/
     @Deprecated
-    @Then("^the command exit status is '(.+?)'$")
-    public void checkShellExitStatus(int expectedExitStatus) throws Exception {
+    @Then("the command exit status is '{int}'")
+    public void checkShellExitStatus(Integer expectedExitStatus) throws Exception {
         assertThat(commonspec.getCommandExitStatus()).as("Is equal to " + expectedExitStatus + ".").isEqualTo(expectedExitStatus);
     }
 }

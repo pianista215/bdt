@@ -17,11 +17,10 @@
 package com.stratio.qa.specs;
 
 import com.stratio.qa.utils.ThreadProperty;
-import cucumber.api.DataTable;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
-import gherkin.pickles.PickleRow;
+import io.cucumber.datatable.DataTable;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.Fail;
 import org.hjson.JsonArray;
@@ -74,9 +73,8 @@ public class MiscSpec extends BaseGSpec {
      * @throws InvocationTargetException exception
      * @throws NoSuchMethodException     exception
      */
-    @Given("^I save element (in position \'(.+?)\' in )?\'(.+?)\' in environment variable \'(.+?)\'$")
-    public void saveElementEnvironment(String foo, String position, String element, String envVar) throws Exception {
-
+    @Given("^I save element (in position '(.+?)' in )?'(.+?)' in environment variable '(.+?)'$")
+    public void saveElementEnvironment(String position, String element, String envVar) throws Exception {
         Pattern pattern = Pattern.compile("^((.*)(\\.)+)(\\$.*)$");
         Matcher matcher = pattern.matcher(element);
         String json;
@@ -102,7 +100,7 @@ public class MiscSpec extends BaseGSpec {
      * @param value  value to be saved
      * @param envVar thread environment variable where to store the value
      */
-    @Given("^I save \'(.+?)\' in variable \'(.+?)\'$")
+    @Given("^I save '(.+?)' in variable '(.+?)'$")
     public void saveInEnvironment(String value, String envVar) {
         ThreadProperty.set(envVar, value);
     }
@@ -113,7 +111,7 @@ public class MiscSpec extends BaseGSpec {
      * @param seconds
      * @throws InterruptedException
      */
-    @When("^I wait '(\\d+?)' seconds?$")
+    @When("^I wait '(\\d+)' seconds?$")
     public void idleWait(Integer seconds) throws InterruptedException {
         Thread.sleep(seconds * DEFAULT_TIMEOUT);
     }
@@ -168,13 +166,11 @@ public class MiscSpec extends BaseGSpec {
      * Checks if an exception has been thrown.
      *
      * @param exception    : "IS NOT" | "IS"
-     * @param foo
      * @param clazz
-     * @param bar
      * @param exceptionMsg
      */
-    @Then("^an exception '(.+?)' thrown( with class '(.+?)'( and message like '(.+?)')?)?")
-    public void assertExceptionNotThrown(String exception, String foo, String clazz, String bar, String exceptionMsg)
+    @Then("^an exception '(.+?)' thrown( with class '(.+?)')?( and message like '(.+?)')?")
+    public void assertExceptionNotThrown(String exception, String clazz, String exceptionMsg)
             throws ClassNotFoundException {
         List<Exception> exceptions = commonspec.getExceptions();
         if ("IS NOT".equals(exception)) {
@@ -182,10 +178,9 @@ public class MiscSpec extends BaseGSpec {
         } else {
             assertThat(exceptions).as("Captured exception list is empty").isNotEmpty();
             Exception ex = exceptions.get(exceptions.size() - 1);
-            if ((clazz != null) && (exceptionMsg != null)) {
+            if (clazz != null && exceptionMsg != null) {
                 assertThat(ex.toString()).as("Unexpected last exception class").contains(clazz);
                 assertThat(ex.toString()).as("Unexpected last exception message").contains(exceptionMsg);
-
             } else if (clazz != null) {
                 assertThat(exceptions.get(exceptions.size() - 1).getClass().getSimpleName()).as("Unexpected last exception class").isEqualTo(clazz);
             }
@@ -205,10 +200,10 @@ public class MiscSpec extends BaseGSpec {
     public void matchWithExpresion(String envVar, DataTable table) throws Exception {
         String jsonString = ThreadProperty.get(envVar);
 
-        for (PickleRow row : table.getPickleRows()) {
-            String expression = row.getCells().get(0).getValue();
-            String condition = row.getCells().get(1).getValue();
-            String result = row.getCells().get(2).getValue();
+        for (List<String> row : table.cells()) {
+            String expression = row.get(0);
+            String condition = row.get(1);
+            String result = row.get(2);
 
             String value = commonspec.getJSONPathString(jsonString, expression, null);
             commonspec.evaluateJSONElementOperation(value, condition, result);
@@ -222,7 +217,7 @@ public class MiscSpec extends BaseGSpec {
      * @param value
      *
      */
-    @Then("^'(?s)(.+?)' ((?!.*with).+?) '(.+?)'$")
+    @Then("^'(.+)' (is|matches|is higher than|is lower than|contains|does not contain|is different from) '(.+)'$")
     public void checkValue(String envVar, String operation, String value) throws Exception {
         switch (operation.toLowerCase()) {
             case "is":

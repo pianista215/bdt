@@ -16,27 +16,26 @@
 
 package com.stratio.qa.cucumber.converter;
 
-import cucumber.api.Transformer;
-
 import java.util.ArrayList;
 import java.util.List;
 
+public class Strokes {
 
-public class ArrayListConverter extends Transformer<List<String>> {
+    private List<String> strokesList;
 
-    @Override
-    public List<String> transform(String input) {
-
-        List<String> response = new ArrayList<String>();
+    public Strokes(String input) {
+        strokesList = new ArrayList<>();
         String[] aInput = input.split(",");
         for (String content : aInput) {
             if (content.trim().equals("")) {
-                response.add(content);
+                strokesList.add(content);
             } else {
-                response.add(content.trim());
+                strokesList.add(content.trim());
             }
         }
+    }
 
-        return response;
+    public List<String> getStrokesList() {
+        return strokesList;
     }
 }

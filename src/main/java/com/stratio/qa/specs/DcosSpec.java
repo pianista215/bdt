@@ -57,19 +57,41 @@ public class DcosSpec extends BaseGSpec {
      * @param email      email for JWT singing
      * @param user       remote user
      * @param password   (required if pemFile null)
+     * @throws Exception exception
+     */
+    @Given("^I authenticate to DCOS cluster '(.+?)' using email '(.+?)' with user '(.+?)' and password '(.+?)'$")
+    public void authenticateDCOSpassword(String remoteHost, String email, String user, String password) throws Exception {
+        authenticateDCOS(remoteHost, email, user, password, null);
+    }
+
+    /**
+     * Authenticate in a DCOS cluster
+     *
+     * @param remoteHost remote host
+     * @param email      email for JWT singing
+     * @param user       remote user
      * @param pemFile    (required if password null)
      * @throws Exception exception
      */
-    @Given("^I authenticate to DCOS cluster '(.+?)' using email '(.+?)'( with user '(.+?)'( and password '(.+?)'| and pem file '(.+?)'))?$")
-    public void authenticateDCOSpem(String remoteHost, String email, String foo, String user, String bar, String password, String pemFile) throws Exception {
-        String DCOSsecret;
-        if (foo == null) {
-            commonspec.setRemoteSSHConnection(new RemoteSSHConnection("root", "stratio", remoteHost, null));
-        } else {
-            commonspec.setRemoteSSHConnection(new RemoteSSHConnection(user, password, remoteHost, pemFile));
-        }
+    @Given("^I authenticate to DCOS cluster '(.+?)' using email '(.+?)' with user '(.+?)' and pem file '(.+?)'$")
+    public void authenticateDCOSpem(String remoteHost, String email, String user, String pemFile) throws Exception {
+        authenticateDCOS(remoteHost, email, user, null, pemFile);
+    }
+
+    /**
+     * Authenticate in a DCOS cluster
+     *
+     * @param remoteHost remote host
+     * @param email      email for JWT singing
+     * @param user       remote user
+     * @param password   (required if pemFile null)
+     * @param pemFile    (required if password null)
+     * @throws Exception exception
+     */
+    private void authenticateDCOS(String remoteHost, String email, String user, String password, String pemFile) throws Exception {
+        commonspec.setRemoteSSHConnection(new RemoteSSHConnection(user, password, remoteHost, pemFile));
         commonspec.getRemoteSSHConnection().runCommand("sudo cat /var/lib/dcos/dcos-oauth/auth-token-secret");
-        DCOSsecret = commonspec.getRemoteSSHConnection().getResult().trim();
+        String DCOSsecret = commonspec.getRemoteSSHConnection().getResult().trim();
         setDCOSCookie(DCOSsecret, email);
     }
 
@@ -94,7 +116,7 @@ public class DcosSpec extends BaseGSpec {
      * @throws Exception exception
      */
     @Given("^I( do not)? set sso token using host '(.+?)' with user '(.+?)' and password '(.+?)'( and tenant '(.+?)')?$")
-    public void setGoSecSSOCookie(String set, String ssoHost, String userName, String passWord, String foo, String tenant) throws Exception {
+    public void setGoSecSSOCookie(String set, String ssoHost, String userName, String passWord, String tenant) throws Exception {
         if (set == null) {
             HashMap<String, String> ssoCookies = new GosecSSOUtils(ssoHost, userName, passWord, tenant).ssoTokenGenerator();
             String[] tokenList = {"user", "dcos-acs-auth-cookie"};
@@ -156,7 +178,6 @@ public class DcosSpec extends BaseGSpec {
         commonspec.executeCommand("cat aux.txt", 0, null);
         checkDataCentersDistribution(serviceList.split(","), obtainsDataCenters(commonspec.getRemoteSSHConnection().getResult()).split(";"));
         commonspec.executeCommand("rm -rf aux.txt", 0, null);
-
     }
 
     /**
@@ -199,7 +220,6 @@ public class DcosSpec extends BaseGSpec {
         }
 
         assertThat(sum).as("There are less services: " + sum + " than expected: " + serviceListArray.length).isEqualTo(serviceListArray.length);
-
     }
 
     public String obtainsDataCenters(String jsonString) {
@@ -234,14 +254,13 @@ public class DcosSpec extends BaseGSpec {
      * @param token      vault value
      * @param isUnsecure vault by http instead of https
      * @param host       gosec machine IP
-     * @param contains   regex needed to match method
-     * @param exitStatus command exit status
+     * @param sExitStatus command exit status
      * @param envVar:    environment variable name
      * @throws Exception exception     *
      */
-    @Given("^I get '(.+?)' from path '(.+?)' for value '(.+?)' with token '(.+?)',( unsecure)? vault host '(.+?)'( with exit status '(.+?)')? and save the value in environment variable '(.+?)'$")
-    public void getSecretInfo(String type, String path, String value, String token, String isUnsecure, String host, String contains, Integer exitStatus, String envVar) throws Exception {
-
+    @Given("^I get '(.+?)' from path '(.+?)' for value '(.+?)' with token '(.+?)',( unsecure)? vault host '(.+?)'( with exit status '(\\d+?)')? and save the value in environment variable '(.+?)'$")
+    public void getSecretInfo(String type, String path, String value, String token, String isUnsecure, String host, String sExitStatus, String envVar) throws Exception {
+        Integer exitStatus = sExitStatus != null ? Integer.parseInt(sExitStatus) : null;
         if (exitStatus == null) {
             exitStatus = 0;
         }
@@ -294,7 +313,6 @@ public class DcosSpec extends BaseGSpec {
             default:
                 break;
         }
-
     }
 
     /**
@@ -456,15 +474,17 @@ public class DcosSpec extends BaseGSpec {
      * @param status  status expected
      * @throws Exception exception     *
      */
-    @Then("^service '(.+?)' status in cluster '(.+?)' is '(suspended|running|deploying)'( in less than '(\\d+?)' seconds checking every '(\\d+?)' seconds)?")
-    public void serviceStatusCheck(String service, String cluster, String status, String foo, Integer totalWait, Integer interval) throws Exception {
+    @Then("^service '(.+?)' status in cluster '(.+?)' is '(suspended|running|deploying)'( in less than '(\\d+)')?( seconds checking every '(\\d+)' seconds)?")
+    public void serviceStatusCheck(String service, String cluster, String status, String sTotalWait, String sInterval) throws Exception {
+        Integer totalWait = sTotalWait != null ? Integer.parseInt(sTotalWait) : null;
+        Integer interval = sInterval != null ? Integer.parseInt(sInterval) : null;
         String response;
         Integer i = 0;
         boolean matched;
 
         response = commonspec.retrieveServiceStatus(service, cluster);
 
-        if (foo != null) {
+        if (totalWait != null && interval != null) {
             matched = status.matches(response);
             while (!matched && i < totalWait) {
                 this.commonspec.getLogger().info("Service status not found yet after " + i + " seconds");
@@ -475,7 +495,6 @@ public class DcosSpec extends BaseGSpec {
         }
 
         assertThat(status).as("Expected status: " + status + " doesn't match obtained one: " + response).matches(response);
-
     }
 
     /**
@@ -486,15 +505,17 @@ public class DcosSpec extends BaseGSpec {
      * @param status  health status expected
      * @throws Exception exception     *
      */
-    @Then("^service '(.+?)' health status in cluster '(.+?)' is '(unhealthy|healthy|unknown)'( in less than '(\\d+?)' seconds checking every '(\\d+?)' seconds)?")
-    public void serviceHealthStatusCheck(String service, String cluster, String status, String foo, Integer totalWait, Integer interval) throws Exception {
+    @Then("^service '(.+?)' health status in cluster '(.+?)' is '(unhealthy|healthy|unknown)'( in less than '(\\d+)')?( seconds checking every '(\\d+)' seconds)?")
+    public void serviceHealthStatusCheck(String service, String cluster, String status, String sTotalWait, String sInterval) throws Exception {
+        Integer totalWait = sTotalWait != null ? Integer.parseInt(sTotalWait) : null;
+        Integer interval = sInterval != null ? Integer.parseInt(sInterval) : null;
         String response;
         Integer i = 0;
         boolean matched;
 
         response = commonspec.retrieveHealthServiceStatus(service, cluster);
 
-        if (foo != null) {
+        if (totalWait != null && interval != null) {
             matched = status.matches(response);
             while (!matched && i < totalWait) {
                 this.commonspec.getLogger().info("Service health status not found yet after " + i + " seconds");
@@ -556,10 +577,10 @@ public class DcosSpec extends BaseGSpec {
     }
 
     public void checkConstraint(String role, String service, String instance, String tag, String constraint, String value) throws Exception {
-        RestSpec restspec = new RestSpec(commonspec);
-        restspec.sendRequestTimeout(100, 5, "GET", "/exhibitor/exhibitor/v1/explorer/node-data?key=%2Fdatastore%2F" + service + "%2F" + instance + "%2Fplan-v2-json&_=", "so that the response contains", null, "str");
+        RestSpec  restspec = new RestSpec(commonspec);
+        restspec.sendRequestTimeout(100, 5, "GET", "/exhibitor/exhibitor/v1/explorer/node-data?key=%2Fdatastore%2F" + service + "%2F" + instance + "%2Fplan-v2-json&_=", null, "str");
         MiscSpec miscspec = new MiscSpec(commonspec);
-        miscspec.saveElementEnvironment(null, null, "$.str", "exhibitor_answer");
+        miscspec.saveElementEnvironment(null, "$.str", "exhibitor_answer");
         Assertions.assertThat(ThreadProperty.get("exhibitor_answer")).overridingErrorMessage("Error while parsing constraints. The instance " + instance + " of the service " + service + " isn't deployed").isNotEmpty();
         CommandExecutionSpec commandexecutionspec = new CommandExecutionSpec(commonspec);
         if (tag.equals("hostname")) {
@@ -567,13 +588,13 @@ public class DcosSpec extends BaseGSpec {
             String[] hostnames = ThreadProperty.get("elementsConstraint").split("\"\"");
             checkConstraintType(role, instance, tag, constraint, value, hostnames);
         } else {
-            restspec.sendRequestTimeout(100, 5, "GET", "/mesos/slaves", "so that the response contains", null, "slaves");
-            miscspec.saveElementEnvironment(null, null, "$", "mesos_answer");
+            restspec.sendRequestTimeout(100, 5, "GET", "/mesos/slaves", null, "slaves");
+            miscspec.saveElementEnvironment(null, "$", "mesos_answer");
             selectElements(role, service, "slaveid");
             String[] slavesid = ThreadProperty.get("elementsConstraint").split("\"\"");
             String[] valor = new String[slavesid.length];
             for (int i = 0; i < slavesid.length; i++) {
-                commandexecutionspec.executeLocalCommand("echo '" + ThreadProperty.get("mesos_answer") + "' | jq '.slaves[] | select(.id == \"" + slavesid[i] + "\").attributes." + tag + "' | sed 's/^.\\|.$//g'", " with exit status ", 0, " and save the value in environment variable ", "valortag");
+                commandexecutionspec.executeLocalCommand("echo '" + ThreadProperty.get("mesos_answer") + "' | jq '.slaves[] | select(.id == \"" + slavesid[i] + "\").attributes." + tag + "' | sed 's/^.\\|.$//g'", "0", "valortag");
                 valor[i] = ThreadProperty.get("valortag");
             }
             checkConstraintType(role, instance, tag, constraint, value, valor);
@@ -594,19 +615,19 @@ public class DcosSpec extends BaseGSpec {
     /**
      * @param role        name of role of a service
      * @param envVar      environment variable where before you save nodes
-     * @param foo         parameter generated by cucumber because of the optional expression
      * @param envVar2     environment variable when you want to check slave nodes
-     * @param timeout     Same RestSpec.sendRequest
-     * @param wait        Same RestSpec.sendRequest
+     * @param sTimeout     Same RestSpec.sendRequest
+     * @param sWait        Same RestSpec.sendRequest
      * @param requestType Same RestSpec.sendRequest
      * @param endPoint    Same RestSpec.sendRequest
      * @param status      Same RestSpec.sendRequest
      * @throws Exception
      */
     @Then("^I check status of nodes '(.+?)' using environment variable '(.+?)'(,'(.+?)')? in less than '(\\d+?)' seconds, checking each '(\\d+?)' seconds, I send a '(.+?)' request to '(.+?)' checking status '(.+?)' of nodes$")
-    public void checkProxyNodesStatus(String role, String envVar, String foo, String envVar2, Integer timeout, Integer wait, String requestType, String endPoint, String status) throws Exception {
-
-        String estadoNodo = "";
+    public void checkProxyNodesStatus(String role, String envVar, String envVar2, String sTimeout, String sWait, String requestType, String endPoint, String status) throws Exception {
+        Integer timeout = Integer.parseInt(sTimeout);
+        Integer wait = Integer.parseInt(sWait);
+        String estadoNodo;
 
         RestSpec restspec = new RestSpec(commonspec);
 
@@ -624,7 +645,7 @@ public class DcosSpec extends BaseGSpec {
                 } else {
                     estadoNodo = "RUNNING";
                 }
-                restspec.sendRequestTimeout(timeout, wait, requestType, endPoint, dataNodes[i], "", "\"" + dataNodes[i] + "\",\"role\":\"" + role + "\",\"status\":\"" + estadoNodo + "\"");
+                restspec.sendRequestTimeout(timeout, wait, requestType, endPoint, dataNodes[i], "\"" + dataNodes[i] + "\",\"role\":\"" + role + "\",\"status\":\"" + estadoNodo + "\"");
             }
 
         } else {
@@ -634,11 +655,9 @@ public class DcosSpec extends BaseGSpec {
                 } else {
                     estadoNodo = "RUNNING";
                 }
-                restspec.sendRequestTimeout(timeout, wait, requestType, endPoint, dataNodes[i], "", "\"" + dataNodes[i] + "\",\"role\":\"" + role + "\",\"status\":\"" + estadoNodo + "\"");
+                restspec.sendRequestTimeout(timeout, wait, requestType, endPoint, dataNodes[i], "\"" + dataNodes[i] + "\",\"role\":\"" + role + "\",\"status\":\"" + estadoNodo + "\"");
             }
         }
-
-
     }
 
 
@@ -647,7 +666,7 @@ public class DcosSpec extends BaseGSpec {
         Assertions.assertThat(service).overridingErrorMessage("Error while parsing arguments. The service must be community, pbd or zookeeper").isIn("community", "zookeeper", "pbd");
         int pos = selectExhibitorRole(role, service);
         Assertions.assertThat(pos).overridingErrorMessage("Error while parsing arguments. The role " + role + " of the service " + service + " doesn't exist").isNotEqualTo(-1);
-        commandexecutionspec.executeLocalCommand("echo '" + ThreadProperty.get("exhibitor_answer") + "' | jq '.phases[" + pos + "].\"000" + (pos + 1) + "\".steps[][] | select(.status | contains(\"RUNNING\")) | select(." + element + " | contains(\"" + elementValue + "\")).name' | sed '1 s/^\"//g' | sed '$ s/\"$//g'", " with exit status ", 0, " and save the value in environment variable ", envValue);
+        commandexecutionspec.executeLocalCommand("echo '" + ThreadProperty.get("exhibitor_answer") + "' | jq '.phases[" + pos + "].\"000" + (pos + 1) + "\".steps[][] | select(.status | contains(\"RUNNING\")) | select(." + element + " | contains(\"" + elementValue + "\")).name' | sed '1 s/^\"//g' | sed '$ s/\"$//g'", "0", envValue);
     }
 
 
@@ -656,7 +675,7 @@ public class DcosSpec extends BaseGSpec {
         Assertions.assertThat(service).overridingErrorMessage("Error while parsing arguments. The service must be community, pbd or zookeeper").isIn("community", "zookeeper", "pbd");
         int pos = selectExhibitorRole(role, service);
         Assertions.assertThat(pos).overridingErrorMessage("Error while parsing arguments. The role " + role + " of the service " + service + " doesn't exist").isNotEqualTo(-1);
-        commandexecutionspec.executeLocalCommand("echo '" + ThreadProperty.get("exhibitor_answer") + "' | jq '.phases[" + Integer.toString(pos) + "].\"000" + Integer.toString(pos + 1) + "\".steps[][] | select(.status | contains(\"RUNNING\"))." + element + "' | sed '1 s/^\"//g' | sed '$ s/\"$//g'", " with exit status ", 0, " and save the value in environment variable ", "elementsConstraint");
+        commandexecutionspec.executeLocalCommand("echo '" + ThreadProperty.get("exhibitor_answer") + "' | jq '.phases[" + Integer.toString(pos) + "].\"000" + Integer.toString(pos + 1) + "\".steps[][] | select(.status | contains(\"RUNNING\"))." + element + "' | sed '1 s/^\"//g' | sed '$ s/\"$//g'", "0", "elementsConstraint");
     }
 
     public void checkConstraintType(String role, String instance, String tag, String constraint, String value, String[] elements) throws Exception {

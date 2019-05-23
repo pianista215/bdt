@@ -16,15 +16,10 @@
 
 package com.stratio.qa.cucumber.testng;
 
-import com.jayway.jsonpath.JsonPath;
-import com.jayway.jsonpath.PathNotFoundException;
-import com.ning.http.client.AsyncHttpClient;
-import com.ning.http.client.Response;
-import com.stratio.qa.specs.CommonG;
 import com.stratio.qa.utils.ThreadProperty;
+import cucumber.api.PickleStepTestStep;
 import cucumber.api.Result;
 import cucumber.api.TestCase;
-import cucumber.api.TestStep;
 import cucumber.api.event.*;
 import cucumber.api.event.EventListener;
 import cucumber.api.formatter.StrictAware;
@@ -54,7 +49,6 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 public class CucumberReporter implements EventListener, StrictAware {
 
@@ -207,11 +201,14 @@ public class CucumberReporter implements EventListener, StrictAware {
     }
 
     private void handleTestStepFinished(TestStepFinished event) {
-        if (!event.testStep.isHook()) {
-            testMethod.steps.add(event.testStep);
+        if (event.testStep instanceof PickleStepTestStep) {
+            testMethod.steps.add((PickleStepTestStep) event.testStep);
             testMethod.results.add(event.result);
         } else {
             testMethod.hooks.add(event.result);
+        }
+        if (event.result.getStatus() == Result.Type.FAILED) {
+            logger.error("STEP FAILED!!!\n");
         }
     }
 
@@ -361,7 +358,7 @@ public class CucumberReporter implements EventListener, StrictAware {
 
         private TestCase scenario = null;
 
-        private List<TestStep> steps = new ArrayList<TestStep>();
+        private List<PickleStepTestStep> steps = new ArrayList<PickleStepTestStep>();
 
         private List<Result> hooks = new ArrayList<Result>();
 

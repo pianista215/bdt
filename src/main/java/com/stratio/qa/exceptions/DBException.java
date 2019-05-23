@@ -24,16 +24,4 @@ public class DBException extends Exception {
         super(message);
     }
 
-    public DBException() {
-        super();
-    }
-
-    public DBException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public DBException(Throwable cause) {
-        super(cause);
-    }
-
 }

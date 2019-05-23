@@ -22,7 +22,7 @@ import cucumber.api.CucumberOptions;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
-@CucumberOptions(format = "json:target/cucumber.json", features = {"src/test/resources/features/selenium.feature"})
+@CucumberOptions(plugin = "json:target/cucumber.json", features = {"src/test/resources/features/selenium.feature"})
 public class SeleniumIT extends BaseGTest {
 
     @Factory(enabled = false, dataProviderClass = BrowsersDataProvider.class, dataProvider = "availableUniqueBrowsers")

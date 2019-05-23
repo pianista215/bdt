@@ -19,22 +19,18 @@ package com.stratio.qa.cucumber.testng;
 import cucumber.api.event.EventListener;
 import cucumber.api.formatter.StrictAware;
 import cucumber.runtime.ClassFinder;
-import cucumber.runtime.CucumberException;
 import cucumber.runtime.RuntimeOptions;
 import cucumber.runtime.RuntimeOptionsFactory;
 import cucumber.runtime.io.MultiLoader;
 import cucumber.runtime.io.ResourceLoader;
 import cucumber.runtime.io.ResourceLoaderClassFinder;
 import org.reflections.Reflections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -45,9 +41,6 @@ public class CucumberRunner {
     private ClassLoader classLoader;
 
     private RuntimeOptions runtimeOptions;
-
-    private final Logger logger = LoggerFactory.getLogger(this.getClass()
-            .getCanonicalName());
 
     /**
      * Default constructor for cucumber Runner.
@@ -126,6 +119,7 @@ public class CucumberRunner {
         uniqueGlue.add("classpath:com/stratio/schema/discovery/specs");
         uniqueGlue.add("classpath:com/stratio/pgbouncer/specs");
         uniqueGlue.add("classpath:com/stratio/ignite/specs");
+        uniqueGlue.add("classpath:com/stratio/qa/cucumber/converter");
 
         runtimeOptions.getGlue().clear();
         runtimeOptions.getGlue().addAll(uniqueGlue);
@@ -156,24 +150,8 @@ public class CucumberRunner {
      * Run the testclases(Features).
      *
      * @throws IOException exception
-     * @throws NoSuchMethodException exception
-     * @throws InvocationTargetException exception
-     * @throws IllegalAccessException exception
      */
-    public void runCukes() throws IOException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-
+    public void runCukes() throws IOException {
         runtime.run();
-
-        if (!runtime.getErrors().isEmpty()) {
-            Iterator<Throwable> iterator = runtime.getErrors().iterator();
-            while (iterator.hasNext()) {
-                Throwable value = iterator.next();
-                if (value.getMessage() != null && value.getMessage().contains("TESTS EXECUTION ABORTED!")) {
-                    iterator.remove();
-                }
-            }
-            logger.error ("Got {} exceptions", runtime.getErrors());
-            throw new CucumberException(runtime.getErrors().get(0));
-        }
     }
 }

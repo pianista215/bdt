@@ -19,7 +19,7 @@ package com.stratio.qa.utils;
 import com.mongodb.*;
 import com.mongodb.util.JSON;
 import com.stratio.qa.exceptions.DBException;
-import cucumber.api.DataTable;
+import io.cucumber.datatable.DataTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -133,7 +133,7 @@ public class MongoDBUtils {
     public void createMongoDBCollection(String colectionName, DataTable options) {
         BasicDBObject aux = new BasicDBObject();
         // Recorremos las options para castearlas y añadirlas a la collection
-        List<List<String>> rowsOp = options.raw();
+        List<List<String>> rowsOp = options.cells();
         for (int i = 0; i < rowsOp.size(); i++) {
             List<String> rowOp = rowsOp.get(i);
             if (rowOp.get(0).equals("size") || rowOp.get(0).equals("max")) {
@@ -201,10 +201,10 @@ public class MongoDBUtils {
         // Primero pasamos la fila del datatable a un hashmap de ColumnName-Type
         List<String[]> colRel = coltoArrayList(table);
         // Vamos insertando fila a fila
-        for (int i = 1; i < table.raw().size(); i++) {
+        for (int i = 1; i < table.cells().size(); i++) {
             // Obtenemos la fila correspondiente
             BasicDBObject doc = new BasicDBObject();
-            List<String> row = table.raw().get(i);
+            List<String> row = table.cells().get(i);
             for (int x = 0; x < row.size(); x++) {
                 String[] colNameType = colRel.get(x);
                 Object data = castSTringTo(colNameType[1], row.get(x));
@@ -239,10 +239,10 @@ public class MongoDBUtils {
         List<DBObject> res = new ArrayList<DBObject>();
         List<String[]> colRel = coltoArrayList(table);
         DBCollection aux = this.dataBase.getCollection(collection);
-        for (int i = 1; i < table.raw().size(); i++) {
+        for (int i = 1; i < table.cells().size(); i++) {
             // Obtenemos la fila correspondiente
             BasicDBObject doc = new BasicDBObject();
-            List<String> row = table.raw().get(i);
+            List<String> row = table.cells().get(i);
             for (int x = 0; x < row.size(); x++) {
                 String[] colNameType = colRel.get(x);
                 Object data = castSTringTo(colNameType[1], row.get(x));
@@ -264,7 +264,7 @@ public class MongoDBUtils {
     private List<String[]> coltoArrayList(DataTable table) {
         List<String[]> res = new ArrayList<String[]>();
         // Primero se obiente la primera fila del datatable
-        List<String> firstRow = table.raw().get(0);
+        List<String> firstRow = table.cells().get(0);
         for (int i = 0; i < firstRow.size(); i++) {
             String[] colTypeArray = firstRow.get(i).split("-");
             res.add(colTypeArray);

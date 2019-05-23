@@ -38,7 +38,7 @@ import com.ning.http.client.Response;
 import com.ning.http.client.cookie.Cookie;
 import com.stratio.qa.conditions.Conditions;
 import com.stratio.qa.utils.*;
-import cucumber.api.DataTable;
+import io.cucumber.datatable.DataTable;
 import cucumber.api.Scenario;
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.io.FileUtils;
@@ -830,13 +830,13 @@ public class CommonG {
 
         if ("json".equals(type) || "gov".equals(type)) {
             LinkedHashMap jsonAsMap = new LinkedHashMap();
-            for (int i = 0; i < modifications.raw().size(); i++) {
-                String composeKey = modifications.raw().get(i).get(0);
-                String operation = modifications.raw().get(i).get(1);
-                String newValue = modifications.raw().get(i).get(2);
+            for (int i = 0; i < modifications.cells().size(); i++) {
+                String composeKey = modifications.cells().get(i).get(0);
+                String operation = modifications.cells().get(i).get(1);
+                String newValue = modifications.cells().get(i).get(2);
 
-                if (modifications.raw().get(0).size() == 4) {
-                    typeJsonObject = modifications.raw().get(i).get(3);
+                if (modifications.cells().get(0).size() == 4) {
+                    typeJsonObject = modifications.cells().get(i).get(3);
                 }
 
                 if (modifiedData.startsWith("[") && modifiedData.endsWith("]")) {
@@ -1033,10 +1033,10 @@ public class CommonG {
                 modifiedData = modifiedData.replaceAll("\"TO_BE_NULL\"", "null");
             }
         } else {
-            for (int i = 0; i < modifications.raw().size(); i++) {
-                String value = modifications.raw().get(i).get(0);
-                String operation = modifications.raw().get(i).get(1);
-                String newValue = modifications.raw().get(i).get(2);
+            for (int i = 0; i < modifications.cells().size(); i++) {
+                String value = modifications.cells().get(i).get(0);
+                String operation = modifications.cells().get(i).get(1);
+                String newValue = modifications.cells().get(i).get(2);
 
                 switch (operation.toUpperCase()) {
                     case "DELETE":
@@ -1477,11 +1477,11 @@ public class CommonG {
             List<Map<String, String>> resultsListExpected = new ArrayList<Map<String, String>>();
             Map<String, String> resultsCucumber;
 
-            for (int e = 1; e < expectedResults.getPickleRows().size(); e++) {
+            for (int e = 1; e < expectedResults.cells().size(); e++) {
                 resultsCucumber = new HashMap<String, String>();
 
-                for (int i = 0; i < expectedResults.getPickleRows().get(0).getCells().size(); i++) {
-                    resultsCucumber.put(expectedResults.getPickleRows().get(0).getCells().get(i).getValue(), expectedResults.getPickleRows().get(e).getCells().get(i).getValue());
+                for (int i = 0; i < expectedResults.cells().get(0).size(); i++) {
+                    resultsCucumber.put(expectedResults.cells().get(0).get(i), expectedResults.cells().get(e).get(i));
 
                 }
                 resultsListExpected.add(resultsCucumber);
@@ -1490,7 +1490,7 @@ public class CommonG {
 
             getLogger().debug("Obtained Results: " + getCSVResults().toString());
 
-            //Firts, we checkt that the number of rows are equals
+            //First, we check that the number of rows are equals
             assertThat(resultsListExpected.size()).overridingErrorMessage("The number of rows of expected result is %s but the csv file contains %s", resultsListExpected.size(), getCSVResults().size()).isEqualTo(getCSVResults().size());
             //Then we check the CSV content
             for (int i = 0; i < resultsListExpected.size(); i++) {
@@ -1594,11 +1594,11 @@ public class CommonG {
             List<Map<String, Object>> resultsListExpected = new ArrayList<Map<String, Object>>();
             Map<String, Object> resultsCucumber;
 
-            for (int e = 1; e < expectedResults.getPickleRows().size(); e++) {
+            for (int e = 1; e < expectedResults.cells().size(); e++) {
                 resultsCucumber = new HashMap<String, Object>();
 
-                for (int i = 0; i < expectedResults.getPickleRows().get(0).getCells().size(); i++) {
-                    resultsCucumber.put(expectedResults.getPickleRows().get(0).getCells().get(i).getValue(), expectedResults.getPickleRows().get(e).getCells().get(i).getValue());
+                for (int i = 0; i < expectedResults.cells().get(0).size(); i++) {
+                    resultsCucumber.put(expectedResults.cells().get(0).get(i), expectedResults.cells().get(e).get(i));
 
                 }
                 resultsListExpected.add(resultsCucumber);
@@ -1667,11 +1667,11 @@ public class CommonG {
             List<Map<String, Object>> resultsListExpected = new ArrayList<Map<String, Object>>();
             Map<String, Object> resultsCucumber;
 
-            for (int e = 1; e < expectedResults.getPickleRows().size(); e++) {
+            for (int e = 1; e < expectedResults.cells().size(); e++) {
                 resultsCucumber = new HashMap<String, Object>();
 
-                for (int i = 0; i < expectedResults.getPickleRows().get(0).getCells().size(); i++) {
-                    resultsCucumber.put(expectedResults.getPickleRows().get(0).getCells().get(i).getValue(), expectedResults.getPickleRows().get(e).getCells().get(i).getValue());
+                for (int i = 0; i < expectedResults.cells().get(0).size(); i++) {
+                    resultsCucumber.put(expectedResults.cells().get(0).get(i), expectedResults.cells().get(e).get(i));
 
                 }
                 resultsListExpected.add(resultsCucumber);
@@ -1749,7 +1749,7 @@ public class CommonG {
      */
     public void resultsMustBeElasticsearch(DataTable expectedResults) throws Exception {
         if (getElasticsearchResults() != null) {
-            List<List<String>> expectedResultList = expectedResults.raw();
+            List<List<String>> expectedResultList = expectedResults.cells();
             //Check size
             assertThat(expectedResultList.size() - 1).overridingErrorMessage(
                     "Expected number of columns to be" + (expectedResultList.size() - 1)

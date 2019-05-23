@@ -22,16 +22,4 @@ public class IncludeException extends Exception {
         super(message);
     }
 
-    public IncludeException() {
-        super();
-    }
-
-    public IncludeException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public IncludeException(Throwable cause) {
-        super(cause);
-    }
-
 }

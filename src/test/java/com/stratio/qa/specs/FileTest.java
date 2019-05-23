@@ -16,11 +16,10 @@
 package com.stratio.qa.specs;
 
 import com.stratio.qa.utils.ThreadProperty;
+import io.cucumber.datatable.DataTable;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
-import java.util.List;
-import cucumber.api.DataTable;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -85,6 +84,27 @@ public class FileTest {
         String expectedResult = "foo = bar";
 
         assertThat(envVarResult).as("Not as expected").isEqualTo(expectedResult);
+    }
+
+    @Test
+    public void testReadCSVFile() throws Exception {
+        List<Map<String, String>> expectedCSVResults = new ArrayList<>();
+        Map<String, String> mapAux = new HashMap<>();
+        mapAux.put("qa", "bdt");
+        mapAux.put("test1", "test2");
+        expectedCSVResults.add(mapAux);
+
+        ThreadProperty.set("class", this.getClass().getCanonicalName());
+
+        CommonG commong = new CommonG();
+        FileSpec file = new FileSpec(commong);
+
+        file.readFromCSV(getClass().getClassLoader().getResource("exampleCSV.csv").getPath(), ",");
+
+        List<Map<String, String>> results = commong.getCSVResults();
+
+        assertThat(commong.getResultsType()).isEqualTo("csv");
+        assertThat(commong.getCSVResults()).isEqualTo(expectedCSVResults);
     }
 
 }

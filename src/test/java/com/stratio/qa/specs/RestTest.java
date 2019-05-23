@@ -16,18 +16,12 @@
 package com.stratio.qa.specs;
 
 import com.ning.http.client.AsyncHttpClient;
-import com.ning.http.client.FluentCaseInsensitiveStringsMap;
-import com.ning.http.client.cookie.Cookie;
-import com.ning.http.client.uri.Uri;
+import com.stratio.qa.assertions.Assertions;
 import com.stratio.qa.utils.ThreadProperty;
-import cucumber.api.DataTable;
-import org.assertj.core.api.Assertions;
+import io.cucumber.datatable.DataTable;
 import org.testng.annotations.Test;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -56,7 +50,7 @@ public class RestTest {
         RestSpec rest = new RestSpec(commong);
 
         try {
-            rest.sendRequestDataTableTimeout(10,1,requestType,endPoint,null,expectedMsg,baseData,null,type,modifications);
+            rest.sendRequestDataTableTimeout(10,1,requestType,endPoint,null,expectedMsg,baseData,type,modifications);
             fail("Expected Exception");
         } catch (NullPointerException e) {
             assertThat(e.getClass().toString()).as("Unexpected exception").isEqualTo(NullPointerException.class.toString());

@@ -93,7 +93,7 @@ public class KafkaSpec extends BaseGSpec {
      * @param topic_name    topic name
      * @param numPartitions number of partitions
      */
-    @When("^I increase '(.+?)' partitions in a Kafka topic named '(.+?)'")
+    @When("^I increase '(\\d+)' partitions in a Kafka topic named '(.+?)'")
     public void modifyPartitions(int numPartitions, String topic_name) throws Exception {
         commonspec.getKafkaUtils().modifyTopicPartitioning(topic_name, numPartitions);
     }
@@ -137,10 +137,9 @@ public class KafkaSpec extends BaseGSpec {
      * @param numOfPartitions Number of partitions
      * @throws Exception
      */
-    @Then("^The number of partitions in topic '(.+?)' should be '(.+?)''?$")
+    @Then("^The number of partitions in topic '(.+?)' should be '(\\d+)'$")
     public void checkNumberOfPartitions(String topic_name, int numOfPartitions) throws Exception {
         Assertions.assertThat(commonspec.getKafkaUtils().getPartitions(topic_name)).isEqualTo(numOfPartitions);
-
     }
 
     @Then("^The kafka topic '(.*?)' has a message containing '(.*?)'$")
@@ -153,7 +152,7 @@ public class KafkaSpec extends BaseGSpec {
         assert commonspec.getKafkaUtils().checkMessageContent(topic, content) : "Topic does not exist or the content does not match";
     }
 
-    @Then("^The kafka topic '(.*?)' has '(.+?)' messages$")
+    @Then("^The kafka topic '(.*?)' has '(\\d+)' messages$")
     public void checkMessageOfTopicLentgh(String topic, int numberOfMessages) {
         Assertions.assertThat(commonspec.getKafkaUtils().checkTopicMessagesLenght(topic)).isEqualTo(numberOfMessages);
     }

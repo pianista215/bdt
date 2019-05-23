@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.stratio.qa.utils;
 
-package com.stratio.qa.cucumber.converter;
+import org.testng.annotations.Test;
 
-import cucumber.api.Transformer;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class BooleanConverter extends Transformer<Boolean> {
+public class HashUtilsIT {
 
-    @Override
-    public Boolean transform(String input) {
-        return "".equals(input);
-
+    @Test
+    public void doHashTest() {
+        assertThat(HashUtils.doHash("QAtest1234")).isEqualTo("-1099787989");
     }
 }

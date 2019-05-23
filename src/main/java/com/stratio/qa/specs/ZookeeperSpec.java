@@ -71,12 +71,12 @@ public class ZookeeperSpec extends BaseGSpec {
      * Create zPath and domcument
      *
      * @param path      path at zookeeper
-     * @param foo       a dummy match group
      * @param content   if it has content it should be defined
-     * @param ephemeral if it's created as ephemeral or not
+     * @param sEphemeral if it's created as ephemeral or not
      */
     @When("^I create the zNode '(.+?)'( with content '(.+?)')? which (IS|IS NOT) ephemeral$")
-    public void createZNode(String path, String foo, String content, boolean ephemeral) throws Exception {
+    public void createZNode(String path, String content, String sEphemeral) throws Exception {
+        boolean ephemeral = sEphemeral.equals("IS");
         if (content != null) {
             commonspec.getZookeeperSecClient().zCreate(path, content, ephemeral);
         } else {
@@ -91,7 +91,7 @@ public class ZookeeperSpec extends BaseGSpec {
      * @param document expected content of znode
      */
     @Then("^the zNode '(.+?)' exists( and contains '(.+?)')?$")
-    public void checkZnodeExists(String zNode, String foo, String document) throws Exception {
+    public void checkZnodeExists(String zNode, String document) throws Exception {
         if (document == null) {
             String breakpoint = commonspec.getZookeeperSecClient().zRead(zNode);
             assert breakpoint.equals("") : "The zNode does not exist";

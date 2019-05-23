@@ -18,8 +18,8 @@ package com.stratio.qa.specs;
 
 import com.csvreader.CsvReader;
 import com.stratio.qa.utils.ThreadProperty;
-import cucumber.api.DataTable;
 import cucumber.api.java.en.When;
+import io.cucumber.datatable.DataTable;
 import org.assertj.core.api.Assertions;
 
 import java.io.*;
