@@ -19,6 +19,7 @@ package com.stratio.qa.specs;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
 import com.stratio.qa.exceptions.SuppressableException;
+import com.stratio.qa.utils.StepException;
 import com.stratio.qa.utils.ThreadProperty;
 import cucumber.api.Result;
 import cucumber.api.Scenario;
@@ -85,6 +86,7 @@ public class HookGSpec extends BaseGSpec {
     @Before(order = 0)
     public void globalSetup() {
         commonspec.getExceptions().clear();
+        StepException.INSTANCE.setException(null);
     }
 
 

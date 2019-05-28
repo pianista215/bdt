@@ -22,6 +22,7 @@ import com.stratio.qa.exceptions.NonReplaceableException;
 import com.stratio.qa.specs.CommonG;
 import com.stratio.qa.specs.HookGSpec;
 import com.stratio.qa.utils.ExceptionList;
+import com.stratio.qa.utils.StepException;
 import com.stratio.qa.utils.ThreadProperty;
 import cucumber.api.PickleStepTestStep;
 import cucumber.api.Result.Type;
@@ -125,87 +126,97 @@ public class ReplacementAspect {
     @Around(value = "replacementStar(language, scenario, skipSteps)")
     public Type aroundReplacementStar(ProceedingJoinPoint pjp, String language, Scenario scenario, boolean skipSteps) throws Throwable {
         if (pjp.getTarget() instanceof PickleStepTestStep) {
-            PickleStepTestStep pickleTestStep = (PickleStepTestStep) pjp.getTarget();
-            PickleStep step = pickleTestStep.getPickleStep();
+            if (StepException.INSTANCE.getException() != null) {
+                return Type.SKIPPED;
+            } else {
+                try {
+                    PickleStepTestStep pickleTestStep = (PickleStepTestStep) pjp.getTarget();
+                    PickleStep step = pickleTestStep.getPickleStep();
 
-            // Replace elements in datatable
-            StringBuilder sbDataTable = new StringBuilder();
-            List<Argument> argumentList = new ArrayList<>(step.getArgument());
-            for (int a = 0; a < argumentList.size(); a++) {
-                if (argumentList.get(a) instanceof PickleTable) {
-                    PickleTable pickleTable = (PickleTable) argumentList.get(a);
-                    List<PickleRow> pickleRowList = new ArrayList<>(pickleTable.getRows());
-                    for (int r = 0; r < pickleRowList.size(); r++) {
-                        PickleRow pickleRow = pickleRowList.get(r);
-                        List<PickleCell> pickleCellList = new ArrayList<>(pickleRow.getCells());
-                        sbDataTable.append("| ");
-                        for (int c = 0; c < pickleCellList.size(); c++) {
-                            PickleCell pickleCell = pickleCellList.get(c);
-                            pickleCellList.set(c, new PickleCell(pickleCell.getLocation(), replacedElement(pickleCell.getValue(), pjp)));
-                            sbDataTable.append(pickleCellList.get(c).getValue()).append(" | ");
+                    // Replace elements in datatable
+                    StringBuilder sbDataTable = new StringBuilder();
+                    List<Argument> argumentList = new ArrayList<>(step.getArgument());
+                    for (int a = 0; a < argumentList.size(); a++) {
+                        if (argumentList.get(a) instanceof PickleTable) {
+                            PickleTable pickleTable = (PickleTable) argumentList.get(a);
+                            List<PickleRow> pickleRowList = new ArrayList<>(pickleTable.getRows());
+                            for (int r = 0; r < pickleRowList.size(); r++) {
+                                PickleRow pickleRow = pickleRowList.get(r);
+                                List<PickleCell> pickleCellList = new ArrayList<>(pickleRow.getCells());
+                                sbDataTable.append("| ");
+                                for (int c = 0; c < pickleCellList.size(); c++) {
+                                    PickleCell pickleCell = pickleCellList.get(c);
+                                    pickleCellList.set(c, new PickleCell(pickleCell.getLocation(), replacedElement(pickleCell.getValue(), pjp)));
+                                    sbDataTable.append(pickleCellList.get(c).getValue()).append(" | ");
+                                }
+                                pickleRowList.set(r, new PickleRow(pickleCellList));
+                                sbDataTable.append("\n");
+                            }
+                            pickleTable = new PickleTable(pickleRowList);
+                            argumentList.set(a, pickleTable);
                         }
-                        pickleRowList.set(r, new PickleRow(pickleCellList));
-                        sbDataTable.append("\n");
                     }
-                    pickleTable = new PickleTable(pickleRowList);
-                    argumentList.set(a, pickleTable);
-                }
-            }
 
-            // Set new datatable in PickleStep object
-            step = new PickleStep(step.getText(), argumentList, step.getLocations());
+                    // Set new datatable in PickleStep object
+                    step = new PickleStep(step.getText(), argumentList, step.getLocations());
 
-            // Replace elements in step
-            String uri = pickleTestStep.getStepLocation().split(":")[0];
-            String stepName = step.getText();
-            String newName = replacedElement(stepName, pjp);
-            String keyword = TestSourcesModelUtil.INSTANCE.getTestSourcesModel().getKeywordFromSource(scenario.getUri(), pickleTestStep.getStepLine());
-            if (!stepName.equals(newName)) {
-                //field up to BasicStatement, from Step and ExampleStep
-                Field field = null;
-                Class current = step.getClass();
-                do {
+                    // Replace elements in step
+                    String uri = pickleTestStep.getStepLocation().split(":")[0];
+                    String stepName = step.getText();
+                    String newName = replacedElement(stepName, pjp);
+                    String keyword = TestSourcesModelUtil.INSTANCE.getTestSourcesModel().getKeywordFromSource(scenario.getUri(), pickleTestStep.getStepLine());
+                    if (!stepName.equals(newName)) {
+                        //field up to BasicStatement, from Step and ExampleStep
+                        Field field = null;
+                        Class current = step.getClass();
+                        do {
+                            try {
+                                field = current.getDeclaredField("text");
+                            } catch (Exception e) {
+                            }
+                        } while ((current = current.getSuperclass()) != null);
+
+                        field.setAccessible(true);
+                        field.set(step, newName.replaceAll("(\\r|\\n|\\r\\n)+", "\\\\n"));
+                        scenario.write(newName);
+                    }
+                    step = new PickleStep(step.getText(), argumentList, step.getLocations());
+
+                    TestSourcesModelUtil.INSTANCE.getTestSourcesModel().addReplacedStep(scenario.getUri(), pickleTestStep.getStepLine(), step);
+                    lastEchoedStep = pickleTestStep.getStepText();
+                    if (HookGSpec.loggerEnabled) {
+                        logger.info("  {}{}", keyword, newName);
+                        if (!sbDataTable.toString().isEmpty()) {
+                            logger.info("  {}", sbDataTable.toString());
+                        }
+                    }
+
+                    // Run step
                     try {
-                        field = current.getDeclaredField("text");
-                    } catch (Exception e) { }
-                } while ((current = current.getSuperclass()) != null);
-
-                field.setAccessible(true);
-                field.set(step, newName.replaceAll("(\\r|\\n|\\r\\n)+", "\\\\n"));
-                scenario.write(newName);
-            }
-            step = new PickleStep(step.getText(), argumentList, step.getLocations());
-
-            TestSourcesModelUtil.INSTANCE.getTestSourcesModel().addReplacedStep(scenario.getUri(), pickleTestStep.getStepLine(), step);
-            lastEchoedStep = pickleTestStep.getStepText();
-            if (HookGSpec.loggerEnabled) {
-                logger.info("  {}{}", keyword, newName);
-                if (!sbDataTable.toString().isEmpty()) {
-                    logger.info("  {}", sbDataTable.toString());
-                }
-            }
-
-            // Run step
-            try {
-                StepDefinitionMatch definitionMatch = glue.stepDefinitionMatch(uri, step);
-                if (definitionMatch != null) {
-                    if (!skipSteps) {
-                        definitionMatch.runStep(language, scenario);
-                        return Type.PASSED;
-                    } else {
-                        definitionMatch.dryRunStep(language, scenario);
-                        return Type.SKIPPED;
+                        StepDefinitionMatch definitionMatch = glue.stepDefinitionMatch(uri, step);
+                        if (definitionMatch != null) {
+                            if (!skipSteps) {
+                                definitionMatch.runStep(language, scenario);
+                                return Type.PASSED;
+                            } else {
+                                definitionMatch.dryRunStep(language, scenario);
+                                return Type.SKIPPED;
+                            }
+                        } else {
+                            logger.error("Undefined step!! {}", newName);
+                            String undefinedStep = scenario.getUri() + " # " + newName;
+                            if (!undefinedSteps.contains(undefinedStep)) {
+                                undefinedSteps.add(undefinedStep);
+                            }
+                            return Type.UNDEFINED;
+                        }
+                    } catch (AmbiguousStepDefinitionsException asde) {
+                        return (Type) pjp.proceed();
                     }
-                } else {
-                    logger.error("Undefined step!! {}", newName);
-                    String undefinedStep = scenario.getUri() + " # " + newName;
-                    if (!undefinedSteps.contains(undefinedStep)) {
-                        undefinedSteps.add(undefinedStep);
-                    }
-                    return Type.UNDEFINED;
+                } catch (Exception e) {
+                    StepException.INSTANCE.setException(e);
+                    throw e;
                 }
-            } catch (AmbiguousStepDefinitionsException asde) {
-                return (Type) pjp.proceed();
             }
         }
         return (Type) pjp.proceed();
