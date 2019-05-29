@@ -41,6 +41,10 @@ import static com.stratio.qa.assertions.Assertions.assertThat;
  */
 public class DcosSpec extends BaseGSpec {
 
+    String descriptorPath = "/stratio_volume/descriptor.json";
+
+    String vaultResponsePath = "/stratio_volume/vault_response";
+
     /**
      * Generic constructor.
      *
@@ -248,14 +252,14 @@ public class DcosSpec extends BaseGSpec {
     /**
      * Get info about secrets according input parameter
      *
-     * @param type       what type of info (cert, key, ca, principal or keytab)
-     * @param path       path where get info
-     * @param value      value inside path
-     * @param token      vault value
-     * @param isUnsecure vault by http instead of https
-     * @param host       gosec machine IP
+     * @param type        what type of info (cert, key, ca, principal or keytab)
+     * @param path        path where get info
+     * @param value       value inside path
+     * @param token       vault value
+     * @param isUnsecure  vault by http instead of https
+     * @param host        gosec machine IP
      * @param sExitStatus command exit status
-     * @param envVar:    environment variable name
+     * @param envVar:     environment variable name
      * @throws Exception exception     *
      */
     @Given("^I get '(.+?)' from path '(.+?)' for value '(.+?)' with token '(.+?)',( unsecure)? vault host '(.+?)'( with exit status '(\\d+?)')? and save the value in environment variable '(.+?)'$")
@@ -577,7 +581,7 @@ public class DcosSpec extends BaseGSpec {
     }
 
     public void checkConstraint(String role, String service, String instance, String tag, String constraint, String value) throws Exception {
-        RestSpec  restspec = new RestSpec(commonspec);
+        RestSpec restspec = new RestSpec(commonspec);
         restspec.sendRequestTimeout(100, 5, "GET", "/exhibitor/exhibitor/v1/explorer/node-data?key=%2Fdatastore%2F" + service + "%2F" + instance + "%2Fplan-v2-json&_=", null, "str");
         MiscSpec miscspec = new MiscSpec(commonspec);
         miscspec.saveElementEnvironment(null, "$.str", "exhibitor_answer");
@@ -616,8 +620,8 @@ public class DcosSpec extends BaseGSpec {
      * @param role        name of role of a service
      * @param envVar      environment variable where before you save nodes
      * @param envVar2     environment variable when you want to check slave nodes
-     * @param sTimeout     Same RestSpec.sendRequest
-     * @param sWait        Same RestSpec.sendRequest
+     * @param sTimeout    Same RestSpec.sendRequest
+     * @param sWait       Same RestSpec.sendRequest
      * @param requestType Same RestSpec.sendRequest
      * @param endPoint    Same RestSpec.sendRequest
      * @param status      Same RestSpec.sendRequest
@@ -809,4 +813,145 @@ public class DcosSpec extends BaseGSpec {
                 return -2;
         }
     }
+
+    /**
+     * Obtains info from file passed as a parameter based on the jq expression passed as a parameter
+     *
+     * @param jqExpression    jq expression to retrieve required information
+     * @param absolutPathFile absolut path to file to retrieve information from
+     * @param envVar          environment variable where to store retrieved information
+     * @throws Exception
+     */
+    @Given("^I obtain '(.+?)' from json file '(.+?)' and save it in environment variable '(.+?)'$")
+    public void obtainInfoFromFile(String jqExpression, String absolutPathFile, String envVar) throws Exception {
+        String prefix = "set -o pipefail && cat ";
+
+        try {
+            commonspec.getRemoteSSHConnection().runCommand("test -f " + absolutPathFile);
+        } catch (Exception e) {
+            commonspec.getLogger().debug("SSH connection not opened.");
+            throw new Exception("SSH connection not opened.");
+        }
+
+        if (commonspec.getRemoteSSHConnection().getExitStatus() != 0) {
+            commonspec.getLogger().debug("File passed as parameter: " + absolutPathFile + ", does not exist in remote system");
+            throw new Exception("File: " + absolutPathFile + " does not exist in remote system.");
+        }
+
+        commonspec.getRemoteSSHConnection().runCommand(prefix + absolutPathFile + " | " + jqExpression);
+        if (commonspec.getRemoteSSHConnection().getExitStatus() != 0) {
+            commonspec.getLogger().debug("Problem with jq expression passed as parameter.");
+            throw new Exception("Error obtaining info from json file: " + commonspec.getRemoteSSHConnection().getResult());
+        }
+
+        if (commonspec.getRemoteSSHConnection().getResult().equals("null")) {
+            commonspec.getLogger().debug("jq expression passed as parameter returns null.");
+            throw new Exception("Info obtained from json file with jq: " + jqExpression + ", is null.");
+        }
+
+        ThreadProperty.set(envVar, commonspec.getRemoteSSHConnection().getResult());
+    }
+
+    /**
+     * Obtains required information from descriptor file
+     *
+     * @param info   information required from descriptor.json in bootstrap system
+     * @param envVar environment variable where to store retrieved information
+     * @throws Exception
+     */
+    @Given("^I obtain '(MASTERS|NODES|PRIV_NODES|PUBLIC_NODES|PUBLIC_NODE|GOSEC_NODES|ID|DNS_SEARCH|INTERNAL_DOMAIN|ARTIFACT_REPO|DOCKER_REGISTRY|EXTERNAL_DOCKER_REGISTRY|REALM|KRB_HOST|LDAP_HOST|VAULT_HOST|ADMIN_USER|TENANT)' from descriptor and save it in environment variable '(.+?)'$")
+    public void obtainInfoFromDescriptor(String info, String envVar) throws Exception {
+        String jqExpression = "";
+
+        switch (info) {
+            case "MASTERS":
+                jqExpression = "jq -crM '.nodes[] | select(.role ?== \"master\") | .networking[0].ip' | jq -rs '. | join(\",\")'";
+                break;
+            case "NODES":
+                jqExpression = "jq -crM '.nodes[] | select(.role ?== \"agent\") | .networking[0].ip' | jq -rs '. | join(\",\")'";
+                break;
+            case "PRIV_NODES":
+                jqExpression = "jq -crM '.nodes[] | select((.role ?== \"agent\") and .public ?== false) | .networking[0].ip' | jq -rs '. | join(\",\")'";
+                break;
+            case "PUBLIC_NODES":
+                jqExpression = "jq -crM '.nodes[] | select((.role ?== \"agent\") and .public ?== true) | .networking[0].ip' | jq -rs '. | join(\",\")'";
+                break;
+            case "PUBLIC_NODE":
+                jqExpression = "jq -cM '.nodes[] | select((.role ?== \"agent\") and .public ?== true) | .networking[0].ip' | jq -crMs '.[0]'";
+                break;
+            case "GOSEC_NODES":
+                jqExpression = "jq -crM '.nodes[] | select(.role ?== \"gosec\") | .networking[0].ip' | jq -rs '. | join(\",\")'";
+                break;
+            case "ID":
+                jqExpression = "jq -crM .id";
+                break;
+            case "DNS_SEARCH":
+                jqExpression = "jq -crM .dnsSearch";
+                break;
+            case "INTERNAL_DOMAIN":
+                jqExpression = "jq -crM .internalDomain";
+                break;
+            case "ARTIFACT_REPO":
+                jqExpression = "jq -crM .artifactRepository";
+                break;
+            case "DOCKER_REGISTRY":
+                jqExpression = "jq -crM .dockerRegistry";
+                break;
+            case "EXTERNAL_DOCKER_REGISTRY":
+                jqExpression = "jq -crM .externalDockerRegistry";
+                break;
+            case "REALM":
+                jqExpression = "jq -crM .security.kerberos.realm";
+                break;
+            case "KRB_HOST":
+                jqExpression = "jq -crM .security.kerberos.kdcHost";
+                break;
+            case "LDAP_HOST":
+                jqExpression = "jq -crM .security.ldap.url";
+                break;
+            case "VAULT_HOST":
+                jqExpression = "jq -crM '.nodes[] | select((.role ?== \"gosec\") and .id ?== \"gosec1\") | .networking[0].ip'";
+                break;
+            case "ADMIN_USER":
+                jqExpression = "jq -crM .security.ldap.adminUserUuid";
+                break;
+            case "TENANT":
+                jqExpression = "jq -crM .security.tenantSSODefault";
+                break;
+            default:
+                break;
+        }
+
+        obtainInfoFromFile(jqExpression, this.descriptorPath, envVar);
+
+    }
+
+    /**
+     * Obtains basic information for tests from descriptor file:
+     * EOS_CLUSTER_ID, EOS_DNS_SEARCH, EOS_INTERNAL_DOMAIN, DCOS_USER, DCOS_TENANT, VAULT_TOKEN
+     *
+     * @throws Exception
+     */
+    @Given("^I obtain basic information from bootstrap$")
+    public void obtainBasicInfoFromDescriptor() throws Exception {
+        String varClusterID = "EOS_CLUSTER_ID";
+        String varClusterDomain = "EOS_DNS_SEARCH";
+        String varInternalDomain = "EOS_INTERNAL_DOMAIN";
+        String varAdminUser = "DCOS_USER";
+//        String varTenant = "DCOS_TENANT";
+        String varVaultHost = "EOS_VAULT_HOST";
+        String varVaultToken = "VAULT_TOKEN";
+        String varPublicNode = "PUBLIC_NODE";
+        String vaultTokenJQ = "jq -cMr .root_token";
+
+        obtainInfoFromDescriptor("ID", varClusterID);
+        obtainInfoFromDescriptor("DNS_SEARCH", varClusterDomain);
+        obtainInfoFromDescriptor("INTERNAL_DOMAIN", varInternalDomain);
+        obtainInfoFromDescriptor("ADMIN_USER", varAdminUser);
+//        obtainInfoFromDescriptor("TENANT", varTenant);
+        obtainInfoFromDescriptor("VAULT_HOST", varVaultHost);
+        obtainInfoFromFile(vaultTokenJQ, this.vaultResponsePath, varVaultToken);
+        obtainInfoFromDescriptor("PUBLIC_NODE", varPublicNode);
+    }
+
 }
