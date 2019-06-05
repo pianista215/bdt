@@ -338,6 +338,20 @@ public class SeleniumSpec extends BaseGSpec {
     }
 
     /**
+     * Retrieve element value and save on {@code envVar}
+     * @param nullableSelector example: div #id_div a .a_class
+     * @param envVar
+     */
+    @Given("I retrieve value from element '(.+?)' and save the value in environment variable '(.+?)'$")
+    public void seleniumRetrieve(String nullableSelector, String envVar) {
+        String jsSelector = NullableString.transform(nullableSelector);
+        WebDriver driver = commonspec.getDriver();
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        String results = (String) js.executeScript("return document.querySelector('" + jsSelector + "').value");
+        ThreadProperty.set(envVar, results);
+    }
+
+    /**
      * Paste text on {@code text}
      *
      * @param nullableSelector example: div #id_div a .a_class
