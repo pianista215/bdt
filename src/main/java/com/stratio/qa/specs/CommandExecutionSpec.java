@@ -84,7 +84,7 @@ public class CommandExecutionSpec extends BaseGSpec {
     /**
      * Copies file/s from local system to remote system
      *
-     * @param remotePath path where file is going to be copy
+     * @param remotePath path where file is going to be copied
      * @param localPath  path where file is located
      * @throws Exception exception
      */
@@ -147,7 +147,7 @@ public class CommandExecutionSpec extends BaseGSpec {
      * @param sExitStatus
      * @throws InterruptedException
      */
-    @Then("^in less than '(\\d+)' seconds, checking each '(\\d+)' seconds, the command output '(.+?)' contains '(.+?)'( with exit status '(\\d+)')?$")
+    @Then("^in less than '(\\d+)' seconds, checking each '(\\d+)' seconds, the command output '(.+?)' contains '(.*?)'( with exit status '(\\d+)')?$")
     public void assertCommandExistsOnTimeOut(Integer timeout, Integer wait, String command, String search, String sExitStatus) throws Exception {
         Integer exitStatus = sExitStatus != null ? Integer.valueOf(sExitStatus) : null;
         Boolean found = false;

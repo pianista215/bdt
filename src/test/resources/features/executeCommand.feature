@@ -27,8 +27,8 @@ Feature: Simple run test
     When I run 'ls -la /tmp | grep total && ls -la /tmp | grep xxx' in the ssh connection with exit status '1'
 
   Scenario: Outbound Inbound file
-    When I outbound copy 'exampleJSON.conf' through a ssh connection to '/tmp/exampleJSON.conf'
-    Then I inbound copy '/tmp/exampleJSON.conf' through a ssh connection to 'fileFromSsh.conf'
+    When I outbound copy 'src/test/resources/exampleJSON.conf' through a ssh connection to '/tmp/exampleJSON.conf'
+    Then I inbound copy '/tmp/exampleJSON.conf' through a ssh connection to '/tmp/fileFromSsh.conf'
 
   Scenario: Default exit status - Check output
     When I run 'ls -la /tmp' in the ssh connection

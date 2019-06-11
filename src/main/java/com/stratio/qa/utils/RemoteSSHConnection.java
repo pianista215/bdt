@@ -108,9 +108,32 @@ public class RemoteSSHConnection {
         String rfile = remotePath;
         String localfile = localPath;
         boolean ptimestamp = true;
+        boolean isDirectory = false;
+
+        File local = new File(localfile);
+        List<String> files = new ArrayList<String>();
+
+        if (local.isDirectory()) {
+            isDirectory = true;
+            File[] listFiles = local.listFiles();
+            for (File file : listFiles) {
+                files.add(file.getAbsolutePath());
+            }
+        } else {
+            files.add(localfile);
+        }
+
+        File remote = new File(remotePath);
+        String remoteDir = remote.getParent();
 
         // exec 'scp -t rfile' remotely
-        String command = "scp " + (ptimestamp ? "-p" : "") + " -d -t " + rfile;
+        String command;
+        if (isDirectory) {
+            command = "scp " + (ptimestamp ? "-p" : "") + " -d -t " + rfile;
+        } else {
+            command = "scp " + (ptimestamp ? "-p" : "") + " -d -t " + remoteDir;
+        }
+
         Channel channel = session.openChannel("exec");
         ((ChannelExec) channel).setCommand(command);
 
@@ -124,17 +147,6 @@ public class RemoteSSHConnection {
             return;
         }
 
-        File myFile = new File(localfile);
-        List<String> files = new ArrayList<String>();
-
-        if (myFile.isDirectory()) {
-            File[] listFiles = myFile.listFiles();
-            for (File file : listFiles) {
-                files.add(file.getAbsolutePath());
-            }
-        } else {
-            files.add(localfile);
-        }
         for (String lfile : files) {
             File _lfile = new File(lfile);
 
@@ -188,6 +200,14 @@ public class RemoteSSHConnection {
         out.close();
 
         channel.disconnect();
+
+        if (!isDirectory) {
+            command = "mv " + remoteDir + File.separator + local.getName() + " " + rfile;
+            channel = session.openChannel("exec");
+            ((ChannelExec) channel).setCommand(command);
+            channel.connect();
+            channel.disconnect();
+        }
     }
 
 
@@ -251,15 +271,19 @@ public class RemoteSSHConnection {
         String rfile = remotePath;
         String lfile = localPath;
 
-        // If localPath is a directory, create it if it does not exist
         String prefix = null;
+
         File local = new File(lfile);
-        if (!local.exists()) {
-            local.mkdir();
-            prefix = lfile + File.separator;
+        if (local.isDirectory()) {
+            File remote = new File(rfile);
+            prefix = lfile + File.separator + remote.getName();
         } else {
-            if (local.isDirectory()) {
-                prefix = lfile + File.separator;
+            File dir = new File(local.getParent());
+            if (dir.isDirectory()) {
+                prefix = lfile;
+            } else {
+                dir.mkdirs();
+                prefix = lfile;
             }
         }
 
@@ -317,7 +341,8 @@ public class RemoteSSHConnection {
             out.flush();
 
             // read a content of lfile
-            fos = new FileOutputStream(prefix == null ? lfile : prefix + file);
+            fos = new FileOutputStream(prefix);
+
             int foo;
             while (true) {
                 if (buf.length < filesize) {
