@@ -6,7 +6,7 @@ Only listing significant user-visible, not internal code cleanups and minor bug 
 
 * Pending changelog
 
-## 0.11.0 (upcoming)
+## 0.11.0 (June 11, 2019)
 
 * [QATM-2484] Fix copyTo and copyFrom methods for dirs/files handling
 * [QATM-1986] Upgrade Cucumber to 3.0.2
