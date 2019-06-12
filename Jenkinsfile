@@ -57,13 +57,9 @@ hose {
             'sleep': 30,
             'healthcheck': 389]],
 	    ['CHROME': [
-	        'image': 'selenium/node-chrome-debug:3.9.1',
+	        'image': 'selenium/standalone-chrome-debug:3.141.59',
             'volumes': [
-		    '/dev/shm:/dev/shm'],
-            'env': [
-		        'HUB_HOST=selenium391.cd',
-                'HUB_PORT=4444',
-                'SE_OPTS="-browser browserName=chrome,version=64%%JUID "']]],
+		    '/dev/shm:/dev/shm']]],
         ['UBUNTU': [
            'image': 'stratio/ubuntu-base:16.04',
            'cmd': '/usr/sbin/sshd -D -e']],
@@ -77,8 +73,7 @@ hose {
     ]
     
     ITPARAMETERS = """
-	    | -DSELENIUM_GRID=selenium391.cd:4444
-	    | -DFORCE_BROWSER=chrome_64%%JUID
+	    | -DFORCE_BROWSER=%%CHROME
         | -DMONGO_HOST=%%MONGODB
         | -DCASSANDRA_HOST=%%CASSANDRA#0
         | -DES_NODE=%%ELASTICSEARCH#0

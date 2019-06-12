@@ -133,20 +133,24 @@ public class HookGSpec extends BaseGSpec {
     @Before(order = ORDER_10, value = {"@mobile or @web"})
     public void seleniumSetup() throws MalformedURLException {
         String grid = System.getProperty("SELENIUM_GRID");
-        if (grid == null) {
-            fail("Selenium grid not available");
-        }
         String b = ThreadProperty.get("browser");
         if ("".equals(b)) {
-            fail("Non available browsers");
+            fail("Non available browsers. Is it BrowsersDataProvider added in your test?");
         }
 
         DesiredCapabilities capabilities = null;
+        String browser;
+        String version;
 
-        String browser = b.split("_")[0];
-        String version = b.split("_")[1];
-        commonspec.setBrowserName(browser);
-        commonspec.getLogger().debug("Setting up selenium for {}", browser);
+        if (grid != null) {
+            browser = b.split("_")[0];
+            version = b.split("_")[1];
+            commonspec.setBrowserName(browser);
+            commonspec.getLogger().debug("Setting up selenium for {}", browser);
+        } else {
+            browser = "chrome";
+            version = "";
+        }
 
         String headers = System.getProperty("PROXY_HEADERS");
         switch (browser.toLowerCase()) {
@@ -189,7 +193,7 @@ public class HookGSpec extends BaseGSpec {
 
         capabilities.setVersion(version);
 
-        grid = "http://" + grid + "/wd/hub";
+        grid = "http://" + (grid != null ? grid : b + ":4444") + "/wd/hub";
         HttpClient.Factory factory = new ApacheHttpClient.Factory(new HttpClientFactory(60000, 60000));
         HttpCommandExecutor executor = new HttpCommandExecutor(new HashMap<String, CommandInfo>(), new URL(grid), factory);
         commonspec.setDriver(new RemoteWebDriver(executor, capabilities));
