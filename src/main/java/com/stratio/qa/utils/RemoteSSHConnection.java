@@ -109,6 +109,7 @@ public class RemoteSSHConnection {
         String localfile = localPath;
         boolean ptimestamp = true;
         boolean isDirectory = false;
+        boolean checkAckError = false;
 
         File local = new File(localfile);
         List<String> files = new ArrayList<String>();
@@ -128,7 +129,7 @@ public class RemoteSSHConnection {
 
         // exec 'scp -t rfile' remotely
         String command;
-        if (isDirectory) {
+        if (isDirectory || remote.isDirectory()) {
             command = "scp " + (ptimestamp ? "-p" : "") + " -d -t " + rfile;
         } else {
             command = "scp " + (ptimestamp ? "-p" : "") + " -d -t " + remoteDir;
@@ -144,7 +145,7 @@ public class RemoteSSHConnection {
         channel.connect();
 
         if (checkAck(in) != 0) {
-            return;
+            throw new Exception("Error copying file");
         }
 
         for (String lfile : files) {
@@ -158,6 +159,7 @@ public class RemoteSSHConnection {
                 out.write(command.getBytes());
                 out.flush();
                 if (checkAck(in) != 0) {
+                    checkAckError = true;
                     break;
                 }
             }
@@ -174,6 +176,7 @@ public class RemoteSSHConnection {
             out.write(command.getBytes());
             out.flush();
             if (checkAck(in) != 0) {
+                checkAckError = true;
                 break;
             }
 
@@ -194,6 +197,7 @@ public class RemoteSSHConnection {
             out.write(buf, 0, 1);
             out.flush();
             if (checkAck(in) != 0) {
+                checkAckError = true;
                 break;
             }
         }
@@ -207,6 +211,10 @@ public class RemoteSSHConnection {
             ((ChannelExec) channel).setCommand(command);
             channel.connect();
             channel.disconnect();
+        }
+
+        if (checkAckError) {
+            throw new Exception("Error copying file");
         }
     }
 
