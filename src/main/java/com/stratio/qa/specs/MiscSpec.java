@@ -217,40 +217,55 @@ public class MiscSpec extends BaseGSpec {
      * @param value
      *
      */
-    @Then("^'(.+)' (is|matches|is higher than|is lower than|contains|does not contain|is different from) '(.+)'$")
+    @Then("^'(.+)' (is|matches|is higher than|is higher than or equal to|is lower than|is lower than or equal to|contains|does not contain|is different from) '(.+)'$")
     public void checkValue(String envVar, String operation, String value) throws Exception {
         switch (operation.toLowerCase()) {
             case "is":
-                Assertions.assertThat(envVar).isEqualTo(value);
+                Assertions.assertThat(envVar).as("Numbers are not equal.").isEqualTo(value);
                 break;
             case "matches":
-                Assertions.assertThat(envVar).matches(value);
+                Assertions.assertThat(envVar).as("Values are different.").matches(value);
                 break;
             case "is higher than":
                 if (envVar.matches("^-?\\d+$") && value.matches("^-?\\d+$")) {
-                    Assertions.assertThat(Integer.parseInt(envVar)).isGreaterThan(Integer.parseInt(value));
+                    Assertions.assertThat(Integer.parseInt(envVar)).as("First value is not higher than second one.").isGreaterThan(Integer.parseInt(value));
                 } else {
-                    Fail.fail("A number should be provided in order to perform a valid comparison.");
+                    throw new Exception("A number should be provided in order to perform a valid comparison.");
+                }
+                break;
+            case "is higher than or equal to":
+                if (envVar.matches("^-?\\d+$") && value.matches("^-?\\d+$")) {
+                    Assertions.assertThat(Integer.parseInt(envVar)).as("First value is not higher than or equal to second one.").isGreaterThanOrEqualTo(Integer.parseInt(value));
+                } else {
+                    throw new Exception("A number should be provided in order to perform a valid comparison.");
+
                 }
                 break;
             case "is lower than":
                 if (envVar.matches("^-?\\d+$") && value.matches("^-?\\d+$")) {
-                    Assertions.assertThat(Integer.parseInt(envVar)).isLessThan(Integer.parseInt(value));
+                    Assertions.assertThat(Integer.parseInt(envVar)).as("First value is not lower than second one.").isLessThan(Integer.parseInt(value));
                 } else {
-                    Fail.fail("A number should be provided in order to perform a valid comparison.");
+                    throw new Exception("A number should be provided in order to perform a valid comparison.");
+                }
+                break;
+            case "is lower than or equal to":
+                if (envVar.matches("^-?\\d+$") && value.matches("^-?\\d+$")) {
+                    Assertions.assertThat(Integer.parseInt(envVar)).as("First value is not lower than or equal to second one.").isLessThanOrEqualTo(Integer.parseInt(value));
+                } else {
+                    throw new Exception("A number should be provided in order to perform a valid comparison.");
                 }
                 break;
             case "contains":
-                Assertions.assertThat(envVar).contains(value);
+                Assertions.assertThat(envVar).as("Second value is not contained in first one.").contains(value);
                 break;
             case "does not contain":
-                Assertions.assertThat(envVar).doesNotContain(value);
+                Assertions.assertThat(envVar).as("Second value is contained in first one.").doesNotContain(value);
                 break;
             case "is different from":
-                Assertions.assertThat(envVar).isNotEqualTo(value);
+                Assertions.assertThat(envVar).as("Both values are equal.").isNotEqualTo(value);
                 break;
             default:
-                Fail.fail("Not a valid comparison. Valid ones are: is | matches | is higher than | is lower than | contains | does not contain | is different from");
+                throw new Exception("Not a valid comparison. Valid ones are: is | matches | is higher than | is higher than or equal to | is lower than | is lower than or equal to | contains | does not contain | is different from");
         }
     }
 }
