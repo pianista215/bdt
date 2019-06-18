@@ -15,6 +15,7 @@
  */
 package com.stratio.qa.aspects;
 
+import com.stratio.qa.utils.ThreadProperty;
 import gherkin.pickles.PickleLocation;
 import gherkin.pickles.PickleTag;
 import org.testng.annotations.Test;
@@ -43,10 +44,24 @@ public class RunOnEnvTagAspectTest {
     }
 
     @Test
+    public void testCheckLocalParams() throws Exception {
+        ThreadProperty.set("HELLO_OK","OK");
+        assertThat(true).as("Params are correctly checked").isEqualTo(runontag.checkParams(runontag.getParams("@runOnEnv(HELLO_OK)")));
+        ThreadProperty.remove("HELLO_OK");
+    }
+
+    @Test
     public void testCheckParams_2() throws Exception {
         System.setProperty("HELLO_KO","KO");
         assertThat(false).as("Params are correctly checked 2").isEqualTo(runontag.checkParams(runontag.getParams("@runOnEnv(HELLO_KO,BYE_KO)")));
         System.clearProperty("HELLO_KO");
+    }
+
+    @Test
+    public void testCheckLocalParams_2() throws Exception {
+        ThreadProperty.set("HELLO_KO","KO");
+        assertThat(false).as("Params are correctly checked 2").isEqualTo(runontag.checkParams(runontag.getParams("@runOnEnv(HELLO_KO,BYE_KO)")));
+        ThreadProperty.remove("HELLO_KO");
     }
 
     @Test
@@ -66,6 +81,7 @@ public class RunOnEnvTagAspectTest {
         System.setProperty("VERSION","1.0.0");
         assertThatExceptionOfType(Exception.class).isThrownBy(() -> runontag.checkParams(runontag.getParams("@runOnEnv(VERSION>1.0)")))
                 .withMessage("Error while parsing params. The versions must have the same number of elements");
+        System.clearProperty("VERSION");
     }
 
     @Test
@@ -73,6 +89,7 @@ public class RunOnEnvTagAspectTest {
         System.setProperty("VERSION","1.0.0-1.0.0");
         assertThatExceptionOfType(Exception.class).isThrownBy(() -> runontag.checkParams(runontag.getParams("@runOnEnv(VERSION>1.0.0-1.0)")))
                 .withMessage("Error while parsing params. The versions must have the same number of elements");
+        System.clearProperty("VERSION");
     }
 
     @Test
@@ -80,6 +97,7 @@ public class RunOnEnvTagAspectTest {
         System.setProperty("VERSION","1.0_0-1.0.0");
         assertThatExceptionOfType(Exception.class).isThrownBy(() -> runontag.checkParams(runontag.getParams("@runOnEnv(VERSION>1.0.0-1.0)")))
                 .withMessage("Error while parsing params. The versions have some characters that are not numbers, '.' or '-' or an invalid format");
+        System.clearProperty("VERSION");
     }
 
     @Test
@@ -87,6 +105,7 @@ public class RunOnEnvTagAspectTest {
         System.setProperty("VERSION","1.0.0@1.0.0");
         assertThatExceptionOfType(Exception.class).isThrownBy(() -> runontag.checkParams(runontag.getParams("@runOnEnv(VERSION>1.0.0-1.0)")))
                 .withMessage("Error while parsing params. The versions have some characters that are not numbers, '.' or '-' or an invalid format");
+        System.clearProperty("VERSION");
     }
 
     @Test
@@ -94,6 +113,7 @@ public class RunOnEnvTagAspectTest {
         System.setProperty("VERSION","1.0.0-1.0.0");
         assertThatExceptionOfType(Exception.class).isThrownBy(() -> runontag.checkParams(runontag.getParams("@runOnEnv(VERSION>1.0.*)")))
                 .withMessage("Error while parsing params. The versions have some characters that are not numbers, '.' or '-' or an invalid format");
+        System.clearProperty("VERSION");
     }
 
     @Test
@@ -101,6 +121,15 @@ public class RunOnEnvTagAspectTest {
         System.setProperty("VERSION","1.0.0-1.0.0");
         assertThatExceptionOfType(Exception.class).isThrownBy(() -> runontag.checkParams(runontag.getParams("@runOnEnv(VERSION>1.0.0-0.5.15-/+-)")))
                 .withMessage("Error while parsing params. The versions have some characters that are not numbers, '.' or '-' or an invalid format");
+        System.clearProperty("VERSION");
+    }
+
+    @Test
+    public void testCheckVersion_5() throws Exception {
+        ThreadProperty.set("VERSION","1.0_0-1.0.0");
+        assertThatExceptionOfType(Exception.class).isThrownBy(() -> runontag.checkParams(runontag.getParams("@runOnEnv(VERSION>1.0.0-1.0)")))
+                .withMessage("Error while parsing params. The versions have some characters that are not numbers, '.' or '-' or an invalid format");
+        ThreadProperty.remove("VERSION");
     }
 
     @Test
@@ -2585,5 +2614,16 @@ public class RunOnEnvTagAspectTest {
         System.setProperty("VERSION","1.0.0-M14-1.0.0");
         assertThatExceptionOfType(Exception.class).isThrownBy(() -> runontag.checkParams(runontag.getParams("@runOnEnv(VERSION>1.0.0-1.0.0)")))
                 .withMessage("Error while parsing params. The versions have some characters that are not numbers, '.' or '-' or an invalid format");
+    }
+
+    @Test
+    public void testGlobalAndLocalVar() throws Exception {
+        System.setProperty("HELLO","OK");
+        ThreadProperty.set("BYE","1.0.0");
+        System.clearProperty("BYE");
+        ThreadProperty.remove("HELLO");
+        assertThat(true).isEqualTo(runontag.checkParams(runontag.getParams("@runOnEnv(BYE=1.0.0&&HELLO=OK)")));
+        System.clearProperty("HELLO");
+        ThreadProperty.remove("BYE");
     }
 }

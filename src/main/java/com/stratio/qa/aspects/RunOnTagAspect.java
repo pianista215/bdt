@@ -159,7 +159,7 @@ public class RunOnTagAspect {
         } else if (params[0][0].contains("<")) {
             result = firstElementOperator(params[0][0], "<");
         } else {
-            if (System.getProperty(params[0][0], "").isEmpty()) {
+            if (System.getProperty(params[0][0], "").isEmpty() && ThreadProperty.get(params[0][0]) == null) {
                 result = false;
             }
         }
@@ -173,7 +173,7 @@ public class RunOnTagAspect {
             } else if (params[0][j].contains("<")) {
                 result = elementOperator(params[0][j], "<", params[1], j - 1, result);
             } else {
-                if (System.getProperty(params[0][j], "").isEmpty()) {
+                if (System.getProperty(params[0][j], "").isEmpty() && ThreadProperty.get(params[0][j]) == null) {
                     result = updateResultOperation(params[1], j - 1, result, false);
                 } else {
                     result = updateResultOperation(params[1], j - 1, result, true);
@@ -191,7 +191,7 @@ public class RunOnTagAspect {
             } else if (params[0][params[0].length - 1].contains("<")) {
                 result = elementOperator(params[0][params[0].length - 1], "<", params[1], params[1].length - 1, result);
             } else {
-                if (System.getProperty(params[0][params[0].length - 1], "").isEmpty()) {
+                if (System.getProperty(params[0][params[0].length - 1], "").isEmpty() && ThreadProperty.get(params[0][params[0].length - 1]) == null) {
                     result = updateResultOperation(params[1], params[1].length - 1, result, false);
                 } else {
                     result = updateResultOperation(params[1], params[1].length - 1, result, true);
@@ -205,17 +205,18 @@ public class RunOnTagAspect {
         boolean result = true;
         String param = element.split(operador)[0];
         String value = element.split(operador)[1];
-        if (System.getProperty(param, "").isEmpty()) {
+        String property = System.getProperty(param) != null ? System.getProperty(param, "") : ThreadProperty.get(param) != null ? ThreadProperty.get(param) : "";
+        if (property.isEmpty()) {
             result = false;
-        } else if (value.contains(".") && System.getProperty(param).contains(".")) {
+        } else if (value.contains(".") && property.contains(".")) {
             if (!checkVersion(operador.charAt(0), param, value)) {
                 result = false;
             }
-        } else if (operador.equals("=") && !value.equals(System.getProperty(param))) {
+        } else if (operador.equals("=") && !value.equals(property)) {
             result = false;
-        } else if (operador.equals(">") && !(System.getProperty(param).compareTo(value) > 0)) {
+        } else if (operador.equals(">") && !(property.compareTo(value) > 0)) {
             result = false;
-        } else if (operador.equals("<") && !(System.getProperty(param).compareTo(value) < 0)) {
+        } else if (operador.equals("<") && !(property.compareTo(value) < 0)) {
             result = false;
         }
         return result;
@@ -225,28 +226,29 @@ public class RunOnTagAspect {
         boolean res = result;
         String param = element.split(operador)[0];
         String value = element.split(operador)[1];
-        if (System.getProperty(param, "").isEmpty()) {
+        String property = System.getProperty(param) != null ? System.getProperty(param, "") : ThreadProperty.get(param) != null ? ThreadProperty.get(param) : "";
+        if (property.isEmpty()) {
             res =  updateResultOperation(operations, posop, result, false);
-        } else if (value.contains(".") && System.getProperty(param).contains(".")) {
+        } else if (value.contains(".") && property.contains(".")) {
             if (!checkVersion(operador.charAt(0), param, value)) {
                 res =  updateResultOperation(operations, posop, result, false);
             } else {
                 res =  updateResultOperation(operations, posop, result, true);
             }
         } else if (operador.equals("=")) {
-            if (!value.equals(System.getProperty(param))) {
+            if (!value.equals(property)) {
                 res =  updateResultOperation(operations, posop, result, false);
             } else {
                 res =  updateResultOperation(operations, posop, result, true);
             }
         } else if (operador.equals(">")) {
-            if (!(System.getProperty(param).compareTo(value) > 0)) {
+            if (!(property.compareTo(value) > 0)) {
                 res =  updateResultOperation(operations, posop, result, false);
             } else {
                 res =  updateResultOperation(operations, posop, result, true);
             }
         } else if (operador.equals("<")) {
-            if (!(System.getProperty(param).compareTo(value) < 0)) {
+            if (!(property.compareTo(value) < 0)) {
                 res =  updateResultOperation(operations, posop, result, false);
             } else {
                 res =  updateResultOperation(operations, posop, result, true);
@@ -268,7 +270,8 @@ public class RunOnTagAspect {
     private boolean checkVersion(char operador, String param, String value) throws Exception {
         boolean result = true;
         String regexp = "^[[[0-9]+.]+[0-9]+][-[[0-9]+.]+[0-9]+]*";
-        String envVarValue = System.getProperty(param).replaceAll("-(SNAPSHOT|[a-zA-Z0-9]{7}|M[1-9]|RC[1-9])[0-9]", "error").replaceAll("-(SNAPSHOT|[a-zA-Z0-9]{7}|M[1-9]|RC[1-9])", "");
+        String property = System.getProperty(param) != null ? System.getProperty(param, "") : ThreadProperty.get(param) != null ? ThreadProperty.get(param) : "";
+        String envVarValue = property.replaceAll("-(SNAPSHOT|[a-zA-Z0-9]{7}|M[1-9]|RC[1-9])[0-9]", "error").replaceAll("-(SNAPSHOT|[a-zA-Z0-9]{7}|M[1-9]|RC[1-9])", "");
         if (!Pattern.matches(regexp, envVarValue) || !Pattern.matches(regexp, value)) {
             throw new Exception("Error while parsing params. The versions have some characters that are not numbers, '.' or '-' or an invalid format");
         } else if (operador == '=') {
