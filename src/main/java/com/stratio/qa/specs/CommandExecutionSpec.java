@@ -136,6 +136,47 @@ public class CommandExecutionSpec extends BaseGSpec {
     }
 
     /**
+     * Checks if {@code expectedCount} text is found, whithin a {@code timeout} in the output of local command {@code command}
+     * and the exit status is the specified in {@code exitStatus}.
+     * Each negative lookup is followed by a wait of {@code wait} seconds.
+     *
+     * @param timeout
+     * @param wait
+     * @param command
+     * @param search
+     * @param sExitStatus
+     * @throws InterruptedException
+     */
+    @Then("^in less than '(\\d+)' seconds, checking each '(\\d+)' seconds, the local command output '(.+?)' contains '(.*?)'( with exit status '(\\d+)')?$")
+    public void assertCommandExistsOnTimeOutLocal(Integer timeout, Integer wait, String command, String search, String sExitStatus) throws Exception {
+        Integer exitStatus = sExitStatus != null ? Integer.valueOf(sExitStatus) : null;
+        Boolean found = false;
+        for (int i = 0; (i <= timeout); i += wait) {
+            if (found) {
+                break;
+            }
+            commonspec.getLogger().debug("Checking local output value");
+            commonspec.runLocalCommand(command);
+            try {
+                if (exitStatus != null) {
+                    assertThat(commonspec.getCommandExitStatus()).isEqualTo(exitStatus);
+                }
+                assertThat(commonspec.getCommandResult()).as("Contains " + search + ".").contains(search);
+                found = true;
+                timeout = i;
+            } catch (AssertionError e) {
+                commonspec.getLogger().info("Local command output don't found yet after " + i + " seconds");
+                Thread.sleep(wait * 1000);
+            }
+        }
+
+        if (!found) {
+            throw new Exception("Local command output don't found yet after " + timeout + " seconds");
+        }
+        commonspec.getLogger().info("Local command output found after " + timeout + " seconds");
+    }
+
+    /**
      * Checks if {@code expectedCount} text is found, whithin a {@code timeout} in the output of command {@code command}
      * and the exit status is the specified in {@code exitStatus}.
      * Each negative lookup is followed by a wait of {@code wait} seconds.
@@ -151,7 +192,6 @@ public class CommandExecutionSpec extends BaseGSpec {
     public void assertCommandExistsOnTimeOut(Integer timeout, Integer wait, String command, String search, String sExitStatus) throws Exception {
         Integer exitStatus = sExitStatus != null ? Integer.valueOf(sExitStatus) : null;
         Boolean found = false;
-        AssertionError ex = null;
         command = "set -o pipefail && alias grep='grep --color=never' && " + command;
         for (int i = 0; (i <= timeout); i += wait) {
             if (found) {
@@ -170,11 +210,11 @@ public class CommandExecutionSpec extends BaseGSpec {
             } catch (AssertionError e) {
                 commonspec.getLogger().info("Command output don't found yet after " + i + " seconds");
                 Thread.sleep(wait * 1000);
-                ex = e;
             }
         }
+
         if (!found) {
-            throw (ex);
+            throw new Exception("Command output don't found yet after " + timeout + " seconds");
         }
         commonspec.getLogger().info("Command output found after " + timeout + " seconds");
     }

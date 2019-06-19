@@ -16,10 +16,12 @@
 package com.stratio.qa.specs;
 
 import com.stratio.qa.utils.ThreadProperty;
+import org.assertj.core.api.Assertions;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
 public class CommandExecutionTest {
 
@@ -52,4 +54,39 @@ public class CommandExecutionTest {
         }
     }
 
+    @Test
+    public void testassertCommandExistsOnTimeOutLocalDoesNotContain() throws Exception {
+        ThreadProperty.set("class", this.getClass().getCanonicalName());
+        CommonG commong = new CommonG();
+        CommandExecutionSpec cmdExec = new CommandExecutionSpec(commong);
+
+        assertThatExceptionOfType(Exception.class).isThrownBy(() -> cmdExec.assertCommandExistsOnTimeOutLocal(5,1,"echo test | grep check", "check", null)).withMessageContaining("Local command output don't found yet after 5 seconds");
+    }
+
+    @Test
+    public void testassertCommandExistsOnTimeOutLocalIncorrectExitStatus() throws Exception {
+        ThreadProperty.set("class", this.getClass().getCanonicalName());
+        CommonG commong = new CommonG();
+        CommandExecutionSpec cmdExec = new CommandExecutionSpec(commong);
+
+        assertThatExceptionOfType(Exception.class).isThrownBy(() -> cmdExec.assertCommandExistsOnTimeOutLocal(5,1,"echo test | grep check", "check", "2")).withMessageContaining("Local command output don't found yet after 5 seconds");
+    }
+
+    @Test
+    public void testassertCommandExistsOnTimeOutLocalCorrectExitStatus() throws Exception {
+        ThreadProperty.set("class", this.getClass().getCanonicalName());
+        CommonG commong = new CommonG();
+        CommandExecutionSpec cmdExec = new CommandExecutionSpec(commong);
+
+        assertThatExceptionOfType(Exception.class).isThrownBy(() -> cmdExec.assertCommandExistsOnTimeOutLocal(5,1,"echo test | grep test", "check", "0")).withMessageContaining("Local command output don't found yet after 5 seconds");
+    }
+
+    @Test
+    public void testassertCommandExistsOnTimeOutLocalSuccess() throws Exception {
+        ThreadProperty.set("class", this.getClass().getCanonicalName());
+        CommonG commong = new CommonG();
+        CommandExecutionSpec cmdExec = new CommandExecutionSpec(commong);
+
+        Assertions.assertThatCode(() -> cmdExec.assertCommandExistsOnTimeOutLocal(5,1,"echo test | grep test", "test", null)).doesNotThrowAnyException();
+    }
 }

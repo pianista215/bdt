@@ -24,6 +24,7 @@ Only listing significant user-visible, not internal code cleanups and minor bug 
 * [QATM-2363] Add step typing textx if the element exists using selenium
 * [QATM-2365] Add retrieve value js
 * [QATM-2488] Add tag to avoid execution when environment variables not defined
+* [QATM-2541] New step local command execution polling
 
 ## 0.10.0 (May 23, 2019)
 
