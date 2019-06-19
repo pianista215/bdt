@@ -16,6 +16,8 @@
 
 package com.stratio.qa.aspects;
 
+import com.auth0.jwt.internal.org.apache.commons.codec.binary.Base64;
+import com.stratio.qa.specs.CommonG;
 import cucumber.runner.Runner;
 import gherkin.events.PickleEvent;
 import gherkin.pickles.PickleTag;
@@ -43,7 +45,7 @@ public class IgnoreTagAspect {
     }
 
     /**
-     * @param pjp ProceedingJoinPoint
+     * @param pjp    ProceedingJoinPoint
      * @param pickle pickle
      * @throws Throwable exception
      */
@@ -59,7 +61,7 @@ public class IgnoreTagAspect {
         String scenarioName = pickle.pickle.getName();
         List<PickleTag> pickleTagList = pickle.pickle.getTags();
         List<String> tagList = new ArrayList<>();
-        for (PickleTag pt:pickleTagList) {
+        for (PickleTag pt : pickleTagList) {
             tagList.add(pt.getName());
         }
 
@@ -81,13 +83,17 @@ public class IgnoreTagAspect {
         ignoreReasons exit = ignoreReasons.NOTIGNORED;
         if (tagList.contains("@ignore")) {
             exit = ignoreReasons.NOREASON;
-            for (String tag: tagList) {
+            for (String tag : tagList) {
                 Pattern pattern = Pattern.compile("@tillfixed\\((.*?)\\)");
                 Matcher matcher = pattern.matcher(tag);
                 if (matcher.find()) {
                     String ticket = matcher.group(1);
-                    logger.warn("Scenario '" + scenarioName + "' ignored because of ticket: " + ticket + "\n");
-                    exit = ignoreReasons.JIRATICKET;
+                    if (!isJiraTicketFixed(ticket)) {
+                        logger.warn("Scenario '" + scenarioName + "' ignored because of ticket: " + ticket + "\n");
+                        exit = ignoreReasons.JIRATICKET;
+                    } else {
+                        return ignoreReasons.NOTIGNORED;
+                    }
                 }
             }
             if (tagList.contains("@envCondition")) {
@@ -110,4 +116,35 @@ public class IgnoreTagAspect {
     }
 
     public enum ignoreReasons { NOTIGNORED, ENVCONDITION, UNIMPLEMENTED, MANUAL, TOOCOMPLEX, JIRATICKET, NOREASON }
+
+    /**
+     * Checks the passed by ticket parameter validity against a Attlasian Jira account
+     *
+     * @param ticket Jira ticket
+     */
+    private boolean isJiraTicketFixed(String ticket) {
+        String userJira = System.getProperty("usernamejira") != null ? System.getProperty("usernamejira") : System.getenv("usernamejira");
+        String passJira = System.getProperty("passwordjira") != null ? System.getProperty("passwordjira") : System.getenv("passwordjira");
+        Boolean isJiraTicketFixed = false;
+
+        if ((userJira != null) || (passJira != null) || "".equals(ticket)) {
+            CommonG comm = new CommonG();
+            String authString = userJira + ":" + passJira;
+            byte[] authEncBytes = Base64.encodeBase64(authString.getBytes());
+            String value = "";
+            try {
+                comm.runLocalCommand("curl -X GET https://stratio.atlassian.net/rest/api/2/issue/" + ticket + " -H 'Authorization: Basic " + new String(authEncBytes) + "' | jq -r '.fields.status.name'");
+                value = comm.getCommandResult().toLowerCase();
+            } catch (Exception e) {
+                logger.error("Rest API Jira connection error", e);
+                return false;
+            }
+
+            if ("done".equals(value) || "finalizado".equals(value) || "qa".equals(value)) {
+                isJiraTicketFixed = true;
+                logger.debug("Jira ticket has status {}, so scenario is not ignored", value);
+            }
+        }
+        return isJiraTicketFixed;
+    }
 }

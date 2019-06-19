@@ -386,64 +386,13 @@ public class CucumberReporter implements EventListener, StrictAware {
             this.scenario = scenario;
         }
 
-//        /**
-//         * Checks the passed by ticket parameter validity against a Attlasian Jira account
-//         *
-//         * @param ticket Jira ticket
-//         */
-//        private boolean isValidJiraTicket (String ticket) {
-//            String userJira = System.getProperty("usernamejira");
-//            String passJira = System.getProperty("passwordjira");
-//            Boolean validTicket = false;
-//
-//            if ((userJira != null) || (passJira != null)  || "".equals(ticket)) {
-//                CommonG comm = new CommonG();
-//                AsyncHttpClient client = new AsyncHttpClient();
-//                Future<Response> response = null;
-//                Logger logger = LoggerFactory.getLogger(ThreadProperty.get("class"));
-//
-//                comm.setRestProtocol("https://");
-//                comm.setRestHost("stratio.atlassian.net");
-//                comm.setRestPort("");
-//                comm.setClient(client);
-//                String endpoint = "/rest/api/2/issue/" + ticket;
-//                try {
-//                    response = comm.generateRequest("GET", true, userJira, passJira, endpoint, "", "json");
-//                    comm.setResponse(endpoint, response.get());
-//                } catch (Exception e) {
-//                    logger.error("Rest API Jira connection error " + String.valueOf(comm.getResponse().getStatusCode()));
-//                    return false;
-//                }
-//
-//                String json = comm.getResponse().getResponse();
-//                String value = "";
-//                try {
-//                    value = JsonPath.read(json, "$.fields.status.name");
-//                    value = value.toLowerCase();
-//                } catch (PathNotFoundException pe) {
-//                    logger.error("Json Path $.fields.status.name not found\r");
-//                    logger.error(json);
-//                    return false;
-//                }
-//
-//                if (!"done".equals(value) || !"finalizado".equals(value) || !"qa".equals(value)) {
-//                    validTicket = true;
-//                }
-//            }
-//            return validTicket;
-//        }
-
         /**
-         * Builds a test result xml document, builds exception messages on non valid ignore causes such as
-         * \@tillfixed without an in progress Stratio's Jira ticker
+         * Builds a test result xml document
          *
          * @param doc report document
          * @param element scenario execution result
          * @param docJunit docJunit report document
          * @param Junit Junit scenario execution result
-         * @throws ExecutionException exception
-         * @throws InterruptedException exception
-         * @throws IOException exception
          */
         public void finish(Document doc, Element element, Document docJunit, Element Junit, Result eventResult) {
             if (steps.isEmpty()) {

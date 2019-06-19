@@ -8,6 +8,7 @@ Only listing significant user-visible, not internal code cleanups and minor bug 
 * [QATM-2494] Fix Permission denied error when we try to copy a file and destination file name is not defined 
 * [QATM-1896] Allow standalone-chrome usage without grid
 * [QATM-2533] Allow local variables in runOnEnv and skipOnEnv tags
+* [QATM-2534] Fix Jira integration using @ignore @tillfixed(XXX)
 
 ## 0.11.0 (June 11, 2019)
 
