@@ -7,8 +7,14 @@ Only listing significant user-visible, not internal code cleanups and minor bug 
 * [QATM-2490] Save service response in environment variable without File parameters
 * [QATM-2494] Fix Permission denied error when we try to copy a file and destination file name is not defined 
 * [QATM-1896] Allow standalone-chrome usage without grid
+* [QATM-2529] Fix code error in gtm_proxy step
+* [QATM-2489] Added PATCH type to rest requests
+* [QATM-2531] add new comparition options
 * [QATM-2533] Allow local variables in runOnEnv and skipOnEnv tags
+* [QATM-2541] new step for local command execution polling
 * [QATM-2534] Fix Jira integration using @ignore @tillfixed(XXX)
+* [QATM-2299] Add screenshot in cucumber report when selenium step fails
+* [QATM-2299] Fix chromeFullScreenCapture method
 
 ## 0.11.0 (June 11, 2019)
 

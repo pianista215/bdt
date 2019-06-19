@@ -359,6 +359,7 @@ public class CommonG {
      * @param method        class of element to be searched
      * @param element       webElement searched in selenium context
      * @param expectedCount integer. Expected number of elements.
+     * @param scenario      Cucumber Scenario
      * @return List(WebElement)
      * @throws IllegalAccessException   exception
      * @throws IllegalArgumentException exception
@@ -367,7 +368,7 @@ public class CommonG {
      * @throws ClassNotFoundException   exception
      */
     public List<WebElement> locateElement(String method, String element,
-                                          Integer expectedCount) throws ClassNotFoundException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+                                          Integer expectedCount, Scenario scenario) throws ClassNotFoundException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
 
         List<WebElement> wel = null;
 
@@ -391,7 +392,7 @@ public class CommonG {
 
         if (expectedCount != -1) {
             PreviousWebElements pwel = new PreviousWebElements(wel);
-            assertThat(this, pwel).as("Element count doesnt match").hasSize(expectedCount);
+            assertThat(this, scenario, pwel).as("Element count doesnt match").hasSize(expectedCount);
         }
 
         return wel;
@@ -483,7 +484,8 @@ public class CommonG {
                     .getCoordinates().inViewPort();
 
             if (currentBrowser.startsWith("chrome")
-                    || currentBrowser.startsWith("droidemu")) {
+                    || currentBrowser.startsWith("droidemu")
+                    || (System.getProperty("SELENIUM_GRID") == null && currentBrowser.contains("chrome"))) {
                 Actions actions = new Actions(driver);
                 actions.keyDown(Keys.CONTROL).sendKeys(Keys.HOME).perform();
                 actions.keyUp(Keys.CONTROL).perform();
@@ -510,7 +512,6 @@ public class CommonG {
         // cuts last image just in case it dupes information
         Integer finalHeight = 0;
         Integer finalWidth = 0;
-
         File trailingImage = capture.get(capture.size() - 1);
         capture.remove(capture.size() - 1);
 
@@ -571,12 +572,10 @@ public class CommonG {
 
         Boolean atBottom = false;
         Integer windowSize = ((Long) ((JavascriptExecutor) driver)
-                .executeScript("return document.documentElement.clientHeight"))
+                .executeScript("return document.documentElement.scrollHeight"))
                 .intValue();
-
         Integer accuScroll = 0;
         Integer newTrailingImageHeight = 0;
-
         try {
             while (!atBottom) {
 
@@ -585,10 +584,11 @@ public class CommonG {
                         .getScreenshotAs(OutputType.FILE));
 
                 ((JavascriptExecutor) driver).executeScript("if(window.screen)"
-                        + " {window.scrollBy(0," + windowSize + ");};");
+                        + " {window.scrollBy(0," + getDocumentHeight(driver) + ");};");
 
-                accuScroll += windowSize;
-                if (getDocumentHeight(driver) <= accuScroll) {
+                accuScroll += getDocumentHeight(driver);
+
+                if (windowSize <= accuScroll) {
                     atBottom = true;
                 }
             }
@@ -597,13 +597,14 @@ public class CommonG {
             logger.error("Interrupted waits among scrolls", e);
         }
 
-        newTrailingImageHeight = accuScroll - getDocumentHeight(driver);
+        newTrailingImageHeight = accuScroll - windowSize;
         return adjustLastCapture(newTrailingImageHeight, capture);
     }
 
     private Integer getDocumentHeight(WebDriver driver) {
-        WebElement body = driver.findElement(By.tagName("html"));
-        return body.getSize().getHeight();
+        return ((Long) ((JavascriptExecutor) driver)
+                .executeScript("return document.documentElement.clientHeight"))
+                .intValue();
     }
 
     /**

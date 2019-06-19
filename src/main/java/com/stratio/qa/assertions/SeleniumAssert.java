@@ -18,6 +18,7 @@ package com.stratio.qa.assertions;
 
 import com.stratio.qa.specs.CommonG;
 import com.stratio.qa.utils.PreviousWebElements;
+import cucumber.api.Scenario;
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.Condition;
 import org.assertj.core.internal.Booleans;
@@ -32,6 +33,8 @@ import java.util.List;
 public class SeleniumAssert extends AbstractAssert<SeleniumAssert, Object> {
 
     private CommonG commonspec;
+
+    private Scenario scenario;
 
     /**
      * Constructor with WebElement.
@@ -65,11 +68,13 @@ public class SeleniumAssert extends AbstractAssert<SeleniumAssert, Object> {
      * Constructor with CommonG and WebDriver.
      *
      * @param commong common object that contains relevant execution info common object
+     * @param scenario Cucumber scenario
      * @param actual webElement used in assert
      */
-    public SeleniumAssert(CommonG commong, WebDriver actual) {
+    public SeleniumAssert(CommonG commong, Scenario scenario, WebDriver actual) {
         super(actual, SeleniumAssert.class);
         this.commonspec = commong;
+        this.scenario = scenario;
     }
 
 
@@ -77,11 +82,13 @@ public class SeleniumAssert extends AbstractAssert<SeleniumAssert, Object> {
      * Constructor with CommonG and WebElement.
      *
      * @param commong common object that contains relevant execution info common object
+     * @param scenario Cucumber scenario
      * @param actual webElement used in assert
      */
-    public SeleniumAssert(CommonG commong, WebElement actual) {
+    public SeleniumAssert(CommonG commong, Scenario scenario, WebElement actual) {
         super(actual, SeleniumAssert.class);
         this.commonspec = commong;
+        this.scenario = scenario;
     }
 
 
@@ -89,11 +96,13 @@ public class SeleniumAssert extends AbstractAssert<SeleniumAssert, Object> {
      * Constructor with CommonG and {@code List<WebElement>}.
      *
      * @param commong common object that contains relevant execution info common object
+     * @param scenario Cucumber scenario
      * @param actual webElement used in assert
      */
-    public SeleniumAssert(CommonG commong, List<WebElement> actual) {
+    public SeleniumAssert(CommonG commong, Scenario scenario, List<WebElement> actual) {
         super(actual, SeleniumAssert.class);
         this.commonspec = commong;
+        this.scenario = scenario;
     }
 
 
@@ -101,11 +110,13 @@ public class SeleniumAssert extends AbstractAssert<SeleniumAssert, Object> {
      * Constructor with CommonG and previousWebElements.
      *
      * @param commong common object that contains relevant execution info common object
+     * @param scenario Cucumber scenario
      * @param actual webElement used in assert
      */
-    public SeleniumAssert(CommonG commong, PreviousWebElements actual) {
+    public SeleniumAssert(CommonG commong, Scenario scenario, PreviousWebElements actual) {
         super(actual, SeleniumAssert.class);
         this.commonspec = commong;
+        this.scenario = scenario;
     }
 
 
@@ -113,11 +124,13 @@ public class SeleniumAssert extends AbstractAssert<SeleniumAssert, Object> {
      * Constructor with CommonG and boolean.
      *
      * @param commong common object that contains relevant execution info common object
+     * @param scenario Cucumber scenario
      * @param actual webElement used in assert
      */
-    public SeleniumAssert(CommonG commong, boolean actual) {
+    public SeleniumAssert(CommonG commong, Scenario scenario, boolean actual) {
         super(actual, SeleniumAssert.class);
         this.commonspec = commong;
+        this.scenario = scenario;
     }
 
 
@@ -125,11 +138,13 @@ public class SeleniumAssert extends AbstractAssert<SeleniumAssert, Object> {
      * Constructor with CommonG and String.
      *
      * @param commong common object that contains relevant execution info common object
+     * @param scenario Cucumber scenario
      * @param actual webElement used in assert
      */
-    public SeleniumAssert(CommonG commong, String actual) {
+    public SeleniumAssert(CommonG commong, Scenario scenario, String actual) {
         super(actual, SeleniumAssert.class);
         this.commonspec = commong;
+        this.scenario = scenario;
     }
 
     /**
@@ -166,66 +181,72 @@ public class SeleniumAssert extends AbstractAssert<SeleniumAssert, Object> {
      * Checks a selenium WebDriver.
      *
      * @param commong common object that contains relevant execution info
+     * @param scenario Cucumber scenario
      * @param actual webElement used in assert
      * @return SeleniumAssert
      */
-    public static SeleniumAssert assertThat(CommonG commong, WebDriver actual) {
-        return new SeleniumAssert(commong, actual);
+    public static SeleniumAssert assertThat(CommonG commong, Scenario scenario, WebDriver actual) {
+        return new SeleniumAssert(commong, scenario, actual);
     }
 
     /**
      * Checks a PreviousWebElements.
      *
      * @param commong common object that contains relevant execution info
+     * @param scenario Cucumber scenario
      * @param actual webElement used in assert
      * @return SeleniumAssert
      */
-    public static SeleniumAssert assertThat(CommonG commong, PreviousWebElements actual) {
-        return new SeleniumAssert(commong, actual);
+    public static SeleniumAssert assertThat(CommonG commong, Scenario scenario, PreviousWebElements actual) {
+        return new SeleniumAssert(commong, scenario, actual);
     }
 
     /**
      * Checks a selenium WebElement.
      *
      * @param commong common object that contains relevant execution info
+     * @param scenario Cucumber scenario
      * @param actual webElement used in assert
      * @return SeleniumAssert
      */
-    public static SeleniumAssert assertThat(CommonG commong, WebElement actual) {
-        return new SeleniumAssert(commong, actual);
+    public static SeleniumAssert assertThat(CommonG commong, Scenario scenario, WebElement actual) {
+        return new SeleniumAssert(commong, scenario, actual);
     }
 
     /**
      * Checks a selenium list of WebElements.
      *
      * @param commong common object that contains relevant execution info
+     * @param scenario Cucumber scenario
      * @param actual webElement used in assert
      * @return SeleniumAssert
      */
-    public static SeleniumAssert assertThat(CommonG commong, List<WebElement> actual) {
-        return new SeleniumAssert(commong, actual);
+    public static SeleniumAssert assertThat(CommonG commong, Scenario scenario, List<WebElement> actual) {
+        return new SeleniumAssert(commong, scenario, actual);
     }
 
     /**
      * Checks a boolean.
      *
      * @param commong common object that contains relevant execution info
+     * @param scenario Cucumber scenario
      * @param actual webElement used in assert
      * @return SeleniumAssert
      */
-    public static SeleniumAssert assertThat(CommonG commong, boolean actual) {
-        return new SeleniumAssert(commong, actual);
+    public static SeleniumAssert assertThat(CommonG commong, Scenario scenario, boolean actual) {
+        return new SeleniumAssert(commong, scenario, actual);
     }
 
     /**
      * Checks a String.
      *
      * @param commong common object that contains relevant execution info
+     * @param scenario Cucumber scenario
      * @param actual webElement used in assert
      * @return SeleniumAssert
      */
-    public static SeleniumAssert assertThat(CommonG commong, String actual) {
-        return new SeleniumAssert(commong, actual);
+    public static SeleniumAssert assertThat(CommonG commong, Scenario scenario, String actual) {
+        return new SeleniumAssert(commong, scenario, actual);
     }
 
     /**
@@ -343,6 +364,15 @@ public class SeleniumAssert extends AbstractAssert<SeleniumAssert, Object> {
     public SeleniumAssert matches(String value) {
         Strings.instance().assertMatches(info, (String) actual, value);
         return this;
+    }
+
+    /**
+     * Returns the cucumber scenario
+     *
+     * @return Scenario
+     */
+    public Scenario getScenario() {
+        return this.scenario;
     }
 
 }

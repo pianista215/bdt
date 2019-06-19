@@ -53,7 +53,15 @@ public class SeleniumSpec extends BaseGSpec {
      */
     public SeleniumSpec(CommonG spec) {
         this.commonspec = spec;
+    }
 
+    /**
+     * Returns scenario
+     *
+     * @return Scenario
+     */
+    public Scenario getScenario() {
+        return scenario;
     }
 
     @Before
@@ -140,7 +148,7 @@ public class SeleniumSpec extends BaseGSpec {
      */
     @Given("^I switch to iframe with '([^:]*?):(.+?)'$")
     public void seleniumIdFrame(String method, String idframe) throws IllegalAccessException, NoSuchFieldException, ClassNotFoundException {
-        assertThat(commonspec.locateElement(method, idframe, 1));
+        assertThat(commonspec.locateElement(method, idframe, 1, scenario));
 
         if (method.equals("id") || method.equals("name")) {
             commonspec.getDriver().switchTo().frame(idframe);
@@ -190,8 +198,8 @@ public class SeleniumSpec extends BaseGSpec {
     public void seleniumDrag(String smethod, String source, String dmethod, String destination) throws ClassNotFoundException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         Actions builder = new Actions(commonspec.getDriver());
 
-        List<WebElement> sourceElement = commonspec.locateElement(smethod, source, 1);
-        List<WebElement> destinationElement = commonspec.locateElement(dmethod, destination, 1);
+        List<WebElement> sourceElement = commonspec.locateElement(smethod, source, 1, scenario);
+        List<WebElement> destinationElement = commonspec.locateElement(dmethod, destination, 1, scenario);
 
         builder.dragAndDrop(sourceElement.get(0), destinationElement.get(0)).perform();
     }
@@ -215,7 +223,7 @@ public class SeleniumSpec extends BaseGSpec {
             fail("Element argument doesn't match regex: ([^:]*?):(.+?) [" + element + "]");
         }
         Actions builder = new Actions(commonspec.getDriver());
-        List<WebElement> sourceElement = commonspec.locateElement(elementArray[0], elementArray[1], 1);
+        List<WebElement> sourceElement = commonspec.locateElement(elementArray[0], elementArray[1], 1, scenario);
         builder.dragAndDropBy(sourceElement.get(0), xOffset, yOffset).perform();
     }
 
@@ -229,12 +237,12 @@ public class SeleniumSpec extends BaseGSpec {
     public void seleniumClick(Integer index) throws InterruptedException {
 
         try {
-            assertThat(this.commonspec, commonspec.getPreviousWebElements()).as("There are less found elements than required")
+            assertThat(this.commonspec, scenario, commonspec.getPreviousWebElements()).as("There are less found elements than required")
                     .hasAtLeast(index);
             commonspec.getPreviousWebElements().getPreviousWebElements().get(index).click();
         } catch (AssertionError e) {
             Thread.sleep(1000);
-            assertThat(this.commonspec, commonspec.getPreviousWebElements()).as("There are less found elements than required")
+            assertThat(this.commonspec, scenario, commonspec.getPreviousWebElements()).as("There are less found elements than required")
                     .hasAtLeast(index);
             commonspec.getPreviousWebElements().getPreviousWebElements().get(index).click();
         } catch (WebDriverException e) {
@@ -253,13 +261,13 @@ public class SeleniumSpec extends BaseGSpec {
     public void seleniumDoubleClick(Integer index) throws InterruptedException {
         Actions action = new Actions(commonspec.getDriver());
         try {
-            assertThat(this.commonspec, commonspec.getPreviousWebElements()).as("There are less found elements than required")
+            assertThat(this.commonspec, scenario, commonspec.getPreviousWebElements()).as("There are less found elements than required")
                     .hasAtLeast(index);
             action.doubleClick(commonspec.getPreviousWebElements().getPreviousWebElements().get(index)).perform();
 
         } catch (AssertionError e) {
             Thread.sleep(1000);
-            assertThat(this.commonspec, commonspec.getPreviousWebElements()).as("There are less found elements than required")
+            assertThat(this.commonspec, scenario, commonspec.getPreviousWebElements()).as("There are less found elements than required")
                     .hasAtLeast(index);
             action.doubleClick(commonspec.getPreviousWebElements().getPreviousWebElements().get(index)).perform();
         }
@@ -272,10 +280,10 @@ public class SeleniumSpec extends BaseGSpec {
      */
     @When("^I clear the content on text input at index '(\\d+)'$")
     public void seleniumClear(Integer index) {
-        assertThat(this.commonspec, commonspec.getPreviousWebElements()).as("There are less found elements than required")
+        assertThat(this.commonspec, scenario, commonspec.getPreviousWebElements()).as("There are less found elements than required")
                 .hasAtLeast(index);
 
-        assertThat(this.commonspec, commonspec.getPreviousWebElements().getPreviousWebElements().get(index)).isTextField(commonspec.getTextFieldCondition());
+        assertThat(this.commonspec, scenario, commonspec.getPreviousWebElements().getPreviousWebElements().get(index)).isTextField(commonspec.getTextFieldCondition());
 
         commonspec.getPreviousWebElements().getPreviousWebElements().get(index).clear();
     }
@@ -288,7 +296,7 @@ public class SeleniumSpec extends BaseGSpec {
      */
     @When("^I delete the text '(.+?)' on the element on index '(\\d+)'( and replace it for '(.+?)')?$")
     public void seleniumDelete(String text, Integer index, String replacement) {
-        assertThat(this.commonspec, commonspec.getPreviousWebElements()).as("There are less found elements than required")
+        assertThat(this.commonspec, scenario, commonspec.getPreviousWebElements()).as("There are less found elements than required")
                 .hasAtLeast(index);
 
         Actions actions = new Actions(commonspec.getDriver());
@@ -317,7 +325,7 @@ public class SeleniumSpec extends BaseGSpec {
     @When("I type {string} on the element on index '{int}'")
     public void seleniumType(String nullablestring, Integer index) {
         String text = NullableString.transform(nullablestring);
-        assertThat(this.commonspec, commonspec.getPreviousWebElements()).as("There are less found elements than required")
+        assertThat(this.commonspec, scenario, commonspec.getPreviousWebElements()).as("There are less found elements than required")
                 .hasAtLeast(index);
         while (text.length() > 0) {
             Actions actions = new Actions(commonspec.getDriver());
@@ -414,7 +422,7 @@ public class SeleniumSpec extends BaseGSpec {
         Strokes strokes = new Strokes(sStrokes);
         Integer index = sIndex != null ? Integer.valueOf(sIndex) : null;
         if (index != null) {
-            assertThat(this.commonspec, commonspec.getPreviousWebElements()).as("There are less found elements than required")
+            assertThat(this.commonspec, scenario, commonspec.getPreviousWebElements()).as("There are less found elements than required")
                     .hasAtLeast(index);
         }
         assertThat(strokes.getStrokesList()).isNotEmpty();
@@ -512,7 +520,7 @@ public class SeleniumSpec extends BaseGSpec {
      */
     @Then("^this text exists '(.+?)'$")
     public void assertSeleniumTextInSource(String text) {
-        assertThat(this.commonspec, commonspec.getDriver()).as("Expected text not found at page").contains(text);
+        assertThat(this.commonspec, scenario, commonspec.getDriver()).as("Expected text not found at page").contains(text);
     }
 
     /**
@@ -529,7 +537,7 @@ public class SeleniumSpec extends BaseGSpec {
      */
     @Then("^'(\\d+)' elements? exists? with '([^:]*?):(.+?)'$")
     public void assertSeleniumNElementExists(Integer expectedCount, String method, String element) throws ClassNotFoundException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
-        List<WebElement> wel = commonspec.locateElement(method, element, expectedCount);
+        List<WebElement> wel = commonspec.locateElement(method, element, expectedCount, scenario);
         PreviousWebElements pwel = new PreviousWebElements(wel);
         commonspec.setPreviousWebElements(pwel);
     }
@@ -556,7 +564,7 @@ public class SeleniumSpec extends BaseGSpec {
                                                       String method, String element) throws InterruptedException, ClassNotFoundException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         List<WebElement> wel = null;
         for (int i = 0; i < timeout; i += wait) {
-            wel = commonspec.locateElement(method, element, -1);
+            wel = commonspec.locateElement(method, element, -1, scenario);
             if (wel.size() == expectedCount) {
                 break;
             } else {
@@ -565,7 +573,7 @@ public class SeleniumSpec extends BaseGSpec {
         }
 
         PreviousWebElements pwel = new PreviousWebElements(wel);
-        assertThat(this.commonspec, pwel).as("Element count doesnt match").hasSize(expectedCount);
+        assertThat(this.commonspec, scenario, pwel).as("Element count doesnt match").hasSize(expectedCount);
         commonspec.setPreviousWebElements(pwel);
 
     }
@@ -578,9 +586,9 @@ public class SeleniumSpec extends BaseGSpec {
      */
     @Then("the element on index '{int}' {isornot} displayed")
     public void assertSeleniumIsDisplayed(Integer index, Boolean isDisplayed) {
-        assertThat(this.commonspec, commonspec.getPreviousWebElements()).as("There are less found elements than required")
+        assertThat(this.commonspec, scenario, commonspec.getPreviousWebElements()).as("There are less found elements than required")
                 .hasAtLeast(index);
-        assertThat(this.commonspec, commonspec.getPreviousWebElements().getPreviousWebElements().get(index).isDisplayed()).as(
+        assertThat(this.commonspec, scenario, commonspec.getPreviousWebElements().getPreviousWebElements().get(index).isDisplayed()).as(
                 "Unexpected element display property").isEqualTo(isDisplayed);
     }
 
@@ -592,9 +600,9 @@ public class SeleniumSpec extends BaseGSpec {
      */
     @Then("the element on index '{int}' {isornot} enabled")
     public void assertSeleniumIsEnabled(Integer index, Boolean isEnabled) {
-        assertThat(this.commonspec, commonspec.getPreviousWebElements()).as("There are less found elements than required")
+        assertThat(this.commonspec, scenario, commonspec.getPreviousWebElements()).as("There are less found elements than required")
                 .hasAtLeast(index);
-        assertThat(this.commonspec, commonspec.getPreviousWebElements().getPreviousWebElements().get(index).isEnabled())
+        assertThat(this.commonspec, scenario, commonspec.getPreviousWebElements().getPreviousWebElements().get(index).isEnabled())
                 .as("Unexpected element enabled property").isEqualTo(isEnabled);
     }
 
@@ -606,9 +614,9 @@ public class SeleniumSpec extends BaseGSpec {
      */
     @Then("the element on index '{int}' {isornot} selected")
     public void assertSeleniumIsSelected(Integer index, Boolean isSelected) {
-        assertThat(this.commonspec, commonspec.getPreviousWebElements()).as("There are less found elements than required")
+        assertThat(this.commonspec, scenario, commonspec.getPreviousWebElements()).as("There are less found elements than required")
                 .hasAtLeast(index);
-        assertThat(this.commonspec, commonspec.getPreviousWebElements().getPreviousWebElements().get(index).isSelected()).as(
+        assertThat(this.commonspec, scenario, commonspec.getPreviousWebElements().getPreviousWebElements().get(index).isSelected()).as(
                 "Unexpected element selected property").isEqualTo(isSelected);
     }
 
@@ -621,11 +629,11 @@ public class SeleniumSpec extends BaseGSpec {
      */
     @Then("^the element on index '(\\d+)' has '(.+?)' as '(.+?)'$")
     public void assertSeleniumHasAttributeValue(Integer index, String attribute, String value) {
-        assertThat(this.commonspec, commonspec.getPreviousWebElements()).as("There are less found elements than required")
+        assertThat(this.commonspec, scenario, commonspec.getPreviousWebElements()).as("There are less found elements than required")
                 .hasAtLeast(index);
         String val = commonspec.getPreviousWebElements().getPreviousWebElements().get(index).getAttribute(attribute);
-        assertThat(this.commonspec, val).as("Attribute not found").isNotNull();
-        assertThat(this.commonspec, val).as("Unexpected value for specified attribute").matches(value);
+        assertThat(this.commonspec, scenario, val).as("Attribute not found").isNotNull();
+        assertThat(this.commonspec, scenario, val).as("Unexpected value for specified attribute").matches(value);
     }
 
     /**
@@ -733,7 +741,7 @@ public class SeleniumSpec extends BaseGSpec {
      */
     @Then("^I save content of element in index '(\\d+)' in environment variable '(.+?)'$")
     public void saveContentWebElementInEnvVar(Integer index, String envVar) {
-        assertThat(this.commonspec, commonspec.getPreviousWebElements()).as("There are less found elements than required")
+        assertThat(this.commonspec, scenario, commonspec.getPreviousWebElements()).as("There are less found elements than required")
                 .hasAtLeast(index);
         String text = commonspec.getPreviousWebElements().getPreviousWebElements().get(index).getText();
         ThreadProperty.set(envVar, text);

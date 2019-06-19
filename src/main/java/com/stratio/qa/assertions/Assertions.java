@@ -19,6 +19,7 @@ package com.stratio.qa.assertions;
 import com.mongodb.DBObject;
 import com.stratio.qa.specs.CommonG;
 import com.stratio.qa.utils.PreviousWebElements;
+import cucumber.api.Scenario;
 import io.cucumber.datatable.DataTable;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -53,28 +54,28 @@ public class Assertions extends org.assertj.core.api.Assertions {
     }
 
 
-    public static SeleniumAssert assertThat(CommonG common, WebDriver actual) {
-        return new SeleniumAssert(common, actual);
+    public static SeleniumAssert assertThat(CommonG common, Scenario scenario, WebDriver actual) {
+        return new SeleniumAssert(common, scenario, actual);
     }
 
-    public static SeleniumAssert assertThat(CommonG common, WebElement actual) {
-        return new SeleniumAssert(common, actual);
+    public static SeleniumAssert assertThat(CommonG common, Scenario scenario, WebElement actual) {
+        return new SeleniumAssert(common, scenario, actual);
     }
 
-    public static SeleniumAssert assertThat(CommonG common, List<WebElement> actual) {
-        return new SeleniumAssert(common, actual);
+    public static SeleniumAssert assertThat(CommonG common, Scenario scenario, List<WebElement> actual) {
+        return new SeleniumAssert(common, scenario, actual);
     }
 
-    public static SeleniumAssert assertThat(CommonG common, PreviousWebElements actual) {
-        return new SeleniumAssert(common, actual);
+    public static SeleniumAssert assertThat(CommonG common, Scenario scenario, PreviousWebElements actual) {
+        return new SeleniumAssert(common, scenario, actual);
     }
 
-    public static SeleniumAssert assertThat(CommonG common, boolean actual) {
-        return new SeleniumAssert(common, actual);
+    public static SeleniumAssert assertThat(CommonG common, Scenario scenario, boolean actual) {
+        return new SeleniumAssert(common, scenario, actual);
     }
 
-    public static SeleniumAssert assertThat(CommonG common, String actual) {
-        return new SeleniumAssert(common, actual);
+    public static SeleniumAssert assertThat(CommonG common, Scenario scenario, String actual) {
+        return new SeleniumAssert(common, scenario, actual);
     }
 
     public static DBObjectsAssert assertThat(DataTable data, ArrayList<DBObject> actual) {

@@ -221,6 +221,8 @@ public class CucumberReporter implements EventListener, StrictAware {
                     stepFailedText.append(" | ").append(elements[0]);
                 } catch (Exception ignore) {
                 }
+            } else {
+                StepException.INSTANCE.setException(new Exception("FAILED SCENARIO"));
             }
             logger.error(stepFailedText.toString());
         }

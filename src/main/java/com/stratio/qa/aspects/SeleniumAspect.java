@@ -21,6 +21,7 @@ import com.stratio.qa.specs.BaseGSpec;
 import com.stratio.qa.specs.CommonG;
 import com.stratio.qa.specs.SeleniumSpec;
 import com.stratio.qa.utils.PreviousWebElements;
+import cucumber.api.Scenario;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -40,7 +41,7 @@ public class SeleniumAspect extends BaseGSpec {
     private final Logger logger = LoggerFactory.getLogger(this.getClass()
             .getCanonicalName());
 
-    @Pointcut("call(* SeleniumAssert.*(..))"
+    @Pointcut("call(* com.stratio.qa.assertions.SeleniumAssert.*(..))"
             + " || call(* org.openqa.selenium.*.click(..))"
             + " || call(* org.openqa.selenium.*.findElement(..))")
     protected void exceptionCallPointcut() {
@@ -65,10 +66,10 @@ public class SeleniumAspect extends BaseGSpec {
             WebDriver driver = null;
             if (ex instanceof WebDriverException) {
                 logger.info("Got a selenium exception");
-                if (!(pjp.getThis() instanceof WebDriver)) {
+                if (!(pjp.getThis() instanceof BaseGSpec)) {
                     throw ex;
                 }
-                driver = (WebDriver) pjp.getThis();
+                driver = ((BaseGSpec) pjp.getThis()).getCommonSpec().getDriver();
             } else if ((pjp.getTarget() instanceof SeleniumAssert)
                     && (ex instanceof AssertionError)) {
                 logger.info("Got a SeleniumAssert response");
@@ -88,7 +89,7 @@ public class SeleniumAspect extends BaseGSpec {
                         (realActual instanceof Boolean) ||
                         (realActual instanceof String) ||
                         (realActual == null)) {
-                    driver = ((CommonG) ((SeleniumAssert) pjp.getTarget()).getCommonspec()).getDriver();
+                    driver = (((SeleniumAssert) pjp.getTarget()).getCommonspec()).getDriver();
                 } else if (realActual instanceof RemoteWebElement) {
                     driver = ((RemoteWebElement) actual.get(as)).getWrappedDriver();
                 }
@@ -96,18 +97,20 @@ public class SeleniumAspect extends BaseGSpec {
             if (driver != null) {
                 logger.info("Trying to capture screenshots...");
                 CommonG common = null;
+                Scenario scenario = null;
                 if ((pjp.getThis() instanceof SeleniumSpec) && (((SeleniumSpec) pjp.getThis()).getCommonSpec() != null)) {
                     common = ((SeleniumSpec) pjp.getThis()).getCommonSpec();
+                    scenario = ((SeleniumSpec) pjp.getThis()).getScenario();
                 } else if ((pjp.getTarget() instanceof SeleniumAssert) && ((SeleniumAssert) pjp.getTarget()).getCommonspec() != null) {
-                    common = ((CommonG) ((SeleniumAssert) pjp.getTarget()).getCommonspec());
+                    common = ((SeleniumAssert) pjp.getTarget()).getCommonspec();
+                    scenario = ((SeleniumAssert) pjp.getTarget()).getScenario();
                 } else {
                     logger.info("Got no Selenium driver to capture a screen");
                     throw ex;
                 }
-                //TODO: Fix null scenario (QATM-2299)
                 common.captureEvidence(driver, "framehtmlSource", "assert", null);
                 common.captureEvidence(driver, "htmlSource", "assert", null);
-                common.captureEvidence(driver, "screenCapture", "assert", null);
+                common.captureEvidence(driver, "screenCapture", "assert", scenario);
                 logger.info("Screenshots are available at target/executions");
             } else {
                 logger.info("Got no Selenium driver to capture a screen");
