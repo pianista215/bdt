@@ -426,8 +426,11 @@ public class DcosSpec extends BaseGSpec {
      */
     @Then("^I add a new DCOS label with key '(.+?)' and value '(.+?)' to the service '(.+?)'?$")
     public void sendAppendRequest(String key, String value, String service) throws Exception {
-        commonspec.runCommandAndGetResult("touch " + service + ".json && dcos marathon app show " + service + " > /dcos/" + service + ".json");
-        commonspec.runCommandAndGetResult("cat /dcos/" + service + ".json");
+        String[] serviceArray = service.split("/");
+        String serviceName = serviceArray[serviceArray.length - 1];
+
+        commonspec.runCommandAndGetResult("touch /dcos/" + serviceName + ".json && dcos marathon app show " + service + " > /dcos/" + serviceName + ".json");
+        commonspec.runCommandAndGetResult("cat /dcos/" + serviceName + ".json");
 
         String configFile = commonspec.getRemoteSSHConnection().getResult();
         String myValue = commonspec.getJSONPathString(configFile, ".labels", "0");
@@ -438,11 +441,11 @@ public class DcosSpec extends BaseGSpec {
         String myFinalJson = myJson.replaceFirst("\\{", "{" + newValue.replace("\\n", "\\\\n") + ",");
         if (myFinalJson.contains("uris")) {
             String test = myFinalJson.replaceAll("\"uris\"", "\"none\"");
-            commonspec.runCommandAndGetResult("echo '" + test + "' > /dcos/final" + service + ".json");
+            commonspec.runCommandAndGetResult("echo '" + test + "' > /dcos/final" + serviceName + ".json");
         } else {
-            commonspec.runCommandAndGetResult("echo '" + myFinalJson + "' > /dcos/final" + service + ".json");
+            commonspec.runCommandAndGetResult("echo '" + myFinalJson + "' > /dcos/final" + serviceName + ".json");
         }
-        commonspec.runCommandAndGetResult("dcos marathon app update " + service + " < /dcos/final" + service + ".json");
+        commonspec.runCommandAndGetResult("dcos marathon app update " + service + " < /dcos/final" + serviceName + ".json");
 
         commonspec.setCommandExitStatus(commonspec.getRemoteSSHConnection().getExitStatus());
     }

@@ -130,8 +130,6 @@ public class CommandExecutionSpec extends BaseGSpec {
             exitStatus = 0;
         }
 
-        command = "set -o pipefail && alias grep='grep --color=never' && " + command;
-
         commonspec.executeCommand(command, exitStatus, envVar);
     }
 
