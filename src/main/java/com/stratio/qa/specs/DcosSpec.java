@@ -589,15 +589,16 @@ public class DcosSpec extends BaseGSpec {
         CommandExecutionSpec commandexecutionspec = new CommandExecutionSpec(commonspec);
         if (tag.equals("hostname")) {
             selectElements(role, service, "agent_hostname");
-            String[] hostnames = ThreadProperty.get("elementsConstraint").split("\"\"");
+            String[] hostnames = ThreadProperty.get("elementsConstraint").split("\n");
             checkConstraintType(role, instance, tag, constraint, value, hostnames);
         } else {
             restspec.sendRequestTimeout(100, 5, "GET", "/mesos/slaves", null, "slaves");
             miscspec.saveElementEnvironment(null, "$", "mesos_answer");
             selectElements(role, service, "slaveid");
-            String[] slavesid = ThreadProperty.get("elementsConstraint").split("\"\"");
+            String[] slavesid = ThreadProperty.get("elementsConstraint").split("\n");
             String[] valor = new String[slavesid.length];
             for (int i = 0; i < slavesid.length; i++) {
+                slavesid[i] = slavesid[i].replace("\"", "");
                 commandexecutionspec.executeLocalCommand("echo '" + ThreadProperty.get("mesos_answer") + "' | jq '.slaves[] | select(.id == \"" + slavesid[i] + "\").attributes." + tag + "' | sed 's/^.\\|.$//g'", "0", "valortag");
                 valor[i] = ThreadProperty.get("valortag");
             }
@@ -637,13 +638,13 @@ public class DcosSpec extends BaseGSpec {
 
         //datanodes
         selectElements(role, "pbd", "name");
-        String[] dataNodes = ThreadProperty.get("elementsConstraint").split("\"\"");
+        String[] dataNodes = ThreadProperty.get("elementsConstraint").split("\n");
 
         //Si tenemos algún DataNode caído, chequeamos los datanodeSlave de ese dataNode
         if (role.contains("datanode_slave") && envVar2 != null) {
 
             for (int i = 0; i < dataNodes.length; i++) {
-
+                dataNodes[i] = dataNodes[i].replace("\"", "");
                 if (dataNodes[i].split("_")[1].contains(ThreadProperty.get(envVar2).split("_")[1])) {
                     estadoNodo = status;
                 } else {
@@ -654,6 +655,7 @@ public class DcosSpec extends BaseGSpec {
 
         } else {
             for (int i = 0; i < dataNodes.length; i++) {
+                dataNodes[i] = dataNodes[i].replace("\"", "");
                 if (dataNodes[i].contains(ThreadProperty.get(envVar)) && !ThreadProperty.get(envVar).isEmpty()) {
                     estadoNodo = status;
                 } else {
@@ -664,22 +666,21 @@ public class DcosSpec extends BaseGSpec {
         }
     }
 
-
     public void selectElements(String role, String service, String element, String elementValue, String envValue) throws Exception {
         CommandExecutionSpec commandexecutionspec = new CommandExecutionSpec(commonspec);
         Assertions.assertThat(service).overridingErrorMessage("Error while parsing arguments. The service must be one of them: [community, pbd, zookeeper, ignite, kubernetes, etcd, arangodb]").isIn("community", "zookeeper", "pbd", "ignite", "kubernetes", "etcd", "arangodb");
         int pos = selectExhibitorRole(role, service);
         Assertions.assertThat(pos).overridingErrorMessage("Error while parsing arguments. The role " + role + " of the service " + service + " doesn't exist").isNotEqualTo(-1);
-        commandexecutionspec.executeLocalCommand("echo '" + ThreadProperty.get("exhibitor_answer") + "' | jq '.phases[" + pos + "].\"000" + (pos + 1) + "\".steps[][] | select(.status | contains(\"RUNNING\")) | select(." + element + " | contains(\"" + elementValue + "\")).name' | sed '1 s/^\"//g' | sed '$ s/\"$//g'", "0", envValue);
+        commandexecutionspec.executeLocalCommand("echo '" + ThreadProperty.get("exhibitor_answer") + "' | jq '.phases[" + pos + "].\"000" + (pos + 1) + "\".steps[][] | select(.status | contains(\"RUNNING\")) | select(." + element + " | contains(\"" + elementValue + "\")).name' | sed '1 s/^\"//g'", "0", envValue);
     }
 
 
-    private void selectElements(String role, String service, String element) throws Exception {
+    public void selectElements(String role, String service, String element) throws Exception {
         CommandExecutionSpec commandexecutionspec = new CommandExecutionSpec(commonspec);
         Assertions.assertThat(service).overridingErrorMessage("Error while parsing arguments. The service must be one of them: [community, pbd, zookeeper, ignite, kubernetes, etcd, arangodb]").isIn("community", "zookeeper", "pbd", "ignite", "kubernetes", "etcd", "arangodb");
         int pos = selectExhibitorRole(role, service);
         Assertions.assertThat(pos).overridingErrorMessage("Error while parsing arguments. The role " + role + " of the service " + service + " doesn't exist").isNotEqualTo(-1);
-        commandexecutionspec.executeLocalCommand("echo '" + ThreadProperty.get("exhibitor_answer") + "' | jq '.phases[" + Integer.toString(pos) + "].\"000" + Integer.toString(pos + 1) + "\".steps[][] | select(.status | contains(\"RUNNING\"))." + element + "' | sed '1 s/^\"//g' | sed '$ s/\"$//g'", "0", "elementsConstraint");
+        commandexecutionspec.executeLocalCommand("echo '" + ThreadProperty.get("exhibitor_answer") + "' | jq '.phases[" + Integer.toString(pos) + "].\"000" + Integer.toString(pos + 1) + "\".steps[][] | select(.status | contains(\"RUNNING\"))." + element + "' | sed '1 s/^\"//g'", "0", "elementsConstraint");
     }
 
     public void checkConstraintType(String role, String instance, String tag, String constraint, String value, String[] elements) throws Exception {
