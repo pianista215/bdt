@@ -18,6 +18,9 @@ Only listing significant user-visible, not internal code cleanups and minor bug 
 * [QATM-2556] return multiline result in local execution as such
 * [QATM-2555] Add ignite, k8s and etcd in check constraints step
 * [QATM-2558] Add arangodb in check constraints step
+* [QATM-2628] small fixes in local command and dcos step
+* [QATM-2636] Fix constraints
+* [QATM-2658] New step to obtain policyID
 
 ## 0.11.0 (June 11, 2019)
 

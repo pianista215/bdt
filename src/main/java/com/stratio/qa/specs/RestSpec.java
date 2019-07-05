@@ -540,4 +540,19 @@ public class RestSpec extends BaseGSpec {
         }
     }
 
+    @When("^I get id from policy with name '(.+?)' and save it in environment variable '(.+?)'$")
+    public void getPolicyId(String policyName, String envVar) throws Exception {
+        String endPoint = "/service/gosecmanagement/api/policy";
+        assertThat(commonspec.getRestHost().isEmpty() || commonspec.getRestPort().isEmpty());
+        sendRequestNoDataTable("GET", endPoint, null, null, null);
+        if (commonspec.getResponse().getStatusCode() == 200) {
+            commonspec.runLocalCommand("echo '" + commonspec.getResponse().getResponse() + "' | jq '.list[] | select (.name == \"" + policyName + "\").id' | sed s/\\\"//g");
+            commonspec.runCommandLoggerAndEnvVar(0, envVar, Boolean.TRUE);
+            if (ThreadProperty.get(envVar) == null || ThreadProperty.get(envVar).trim().equals("")) {
+                fail("Error obtaining ID from policy " + policyName);
+            }
+        } else {
+            fail("Error obtaining policies from gosecmanagement (Response code = " + commonspec.getResponse().getStatusCode() + ")");
+        }
+    }
 }
