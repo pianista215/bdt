@@ -250,12 +250,24 @@ public class RestSpec extends BaseGSpec {
      * @throws Exception
      */
     private void createResourceIfNotExist(String resource, String resourceId, String endPoint, String loginInfo, boolean doesNotExist, String baseData, String type, DataTable modifications) throws Exception {
-        Integer expectedStatusCreate = new Integer(201);
-        Integer expectedStatusDelete = new Integer(200);
+        Integer expectedStatusCreate = 201;
+        Integer expectedStatusDelete = 200;
         String endPointResource = endPoint + "/" + resourceId;
 
         try {
             assertThat(commonspec.getRestHost().isEmpty() || commonspec.getRestPort().isEmpty());
+
+            if (resource.equals("policy")) {
+                sendRequestNoDataTable("GET", endPoint, loginInfo, null, null);
+                if (commonspec.getResponse().getStatusCode() == 200) {
+                    commonspec.runLocalCommand("echo '" + commonspec.getResponse().getResponse() + "' | jq '.list[] | select (.name == \"" + resourceId + "\").id' | sed s/\\\"//g");
+                    String policyId = commonspec.getCommandResult().trim();
+                    if (!policyId.equals("")) {
+                        commonspec.getLogger().debug("PolicyId obtained: {}", policyId);
+                        endPointResource = endPoint + "/" + policyId;
+                    }
+                }
+            }
 
             sendRequestNoDataTable("GET", endPointResource, loginInfo, null, null);
 
@@ -266,7 +278,7 @@ public class RestSpec extends BaseGSpec {
                         commonspec.getLogger().warn("The resource {} already exists", resourceId);
                     } else {
                         assertThat(commonspec.getResponse().getStatusCode()).isEqualTo(expectedStatusCreate);
-                        commonspec.getLogger().warn("Resource {} created", resourceId);
+                        commonspec.getLogger().debug("Resource {} created", resourceId);
                     }
                 } catch (Exception e) {
                     commonspec.getLogger().warn("Error creating user {}: {}", resourceId, commonspec.getResponse().getResponse());
@@ -275,7 +287,7 @@ public class RestSpec extends BaseGSpec {
             } else {
                 commonspec.getLogger().warn("{}:{} already exist", resource, resourceId);
                 if (resource.equals("policy") && commonspec.getResponse().getStatusCode() == 200) {
-                    if (doesNotExist == true) {
+                    if (doesNotExist) {
                         //Policy already exists
                         commonspec.getLogger().warn("Policy {} already exist - not created", resourceId);
 
@@ -311,18 +323,30 @@ public class RestSpec extends BaseGSpec {
      */
     @When("^I delete '(policy|user|group)' '(.+?)' using API service path '(.+?)'( with user and password '(.+:.+?)')? if it exists$")
     public void deleteUserIfExists(String resource, String resourceId, String endPoint, String loginInfo) throws Exception {
-        Integer expectedStatusDelete = new Integer(200);
+        Integer expectedStatusDelete = 200;
         String endPointResource = endPoint + "/" + resourceId;
 
         try {
             assertThat(commonspec.getRestHost().isEmpty() || commonspec.getRestPort().isEmpty());
+
+            if (resource.equals("policy")) {
+                sendRequestNoDataTable("GET", endPoint, loginInfo, null, null);
+                if (commonspec.getResponse().getStatusCode() == 200) {
+                    commonspec.runLocalCommand("echo '" + commonspec.getResponse().getResponse() + "' | jq '.list[] | select (.name == \"" + resourceId + "\").id' | sed s/\\\"//g");
+                    String policyId = commonspec.getCommandResult().trim();
+                    if (!policyId.equals("")) {
+                        commonspec.getLogger().debug("PolicyId obtained: {}", policyId);
+                        endPointResource = endPoint + "/" + policyId;
+                    }
+                }
+            }
 
             sendRequestNoDataTable("GET", endPointResource, loginInfo, null, null);
 
             if (commonspec.getResponse().getStatusCode() == 200) {
                 //Delete user if exists
                 sendRequestNoDataTable("DELETE", endPointResource, loginInfo, null, null);
-                commonspec.getLogger().warn("Resource {} deleted", resourceId);
+                commonspec.getLogger().debug("Resource {} deleted", resourceId);
 
                 try {
                     assertThat(commonspec.getResponse().getStatusCode()).isEqualTo(expectedStatusDelete);
@@ -330,6 +354,8 @@ public class RestSpec extends BaseGSpec {
                     commonspec.getLogger().warn("Error deleting Resource {}: {}", resourceId, commonspec.getResponse().getResponse());
                     throw e;
                 }
+            } else {
+                commonspec.getLogger().debug("Resource {} with id {} not found so it's not deleted", resource, resourceId);
             }
         } catch (Exception e) {
             commonspec.getLogger().error("Rest Host or Rest Port are not initialized {}: {}", commonspec.getRestHost(), commonspec.getRestPort());

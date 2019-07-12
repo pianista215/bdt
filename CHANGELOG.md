@@ -21,6 +21,7 @@ Only listing significant user-visible, not internal code cleanups and minor bug 
 * [QATM-2628] small fixes in local command and dcos step
 * [QATM-2636] Fix constraints
 * [QATM-2658] New step to obtain policyID
+* [QATM-2701] Modify create/delete policy steps to obtain policyID
 
 ## 0.11.0 (June 11, 2019)
 
