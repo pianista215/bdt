@@ -22,6 +22,7 @@ Only listing significant user-visible, not internal code cleanups and minor bug 
 * [QATM-2636] Fix constraints
 * [QATM-2658] New step to obtain policyID
 * [QATM-2701] Modify create/delete policy steps to obtain policyID
+* Enhanced SSH connection. Avoiding other methods than pem/password and setting Strict Host to false
 
 ## 0.11.0 (June 11, 2019)
 
