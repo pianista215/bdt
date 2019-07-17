@@ -59,6 +59,10 @@ public class RemoteSSHConnection {
 
         Session session = jsch.getSession(user, remoteHost, sshPort);
 
+        // Trust everywhere we go
+        session.setConfig("StrictHostKeyChecking", "no");
+        session.setConfig("PreferredAuthentications", "publickey,password");
+
         // Pass user
         UserInfo ui = new MyUserInfo();
         session.setUserInfo(ui);
