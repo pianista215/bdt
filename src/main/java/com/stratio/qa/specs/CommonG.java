@@ -1163,6 +1163,7 @@ public class CommonG {
                     request = request.setHeader("Content-Type", "application/json; charset=UTF-8");
                     request = request.setHeader("Accept", "application/json");
                     request = request.setHeader("X-TenantID", "NONE");
+                    request = request.setHeader("X-UserID", "admin");
                 }
 
                 if (this.getResponse() != null) {
