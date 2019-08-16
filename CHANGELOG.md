@@ -9,7 +9,7 @@ Only listing significant user-visible, not internal code cleanups and minor bug 
 * [QATM-1896] Allow standalone-chrome usage without grid
 * [QATM-2529] Fix code error in gtm_proxy step
 * [QATM-2489] Added PATCH type to rest requests
-* [QATM-2531] add new comparition options
+* [QATM-2531] add new comparison options
 * [QATM-2533] Allow local variables in runOnEnv and skipOnEnv tags
 * [QATM-2541] new step for local command execution polling
 * [QATM-2534] Fix Jira integration using @ignore @tillfixed(XXX)
@@ -22,7 +22,12 @@ Only listing significant user-visible, not internal code cleanups and minor bug 
 * [QATM-2636] Fix constraints
 * [QATM-2658] New step to obtain policyID
 * [QATM-2701] Modify create/delete policy steps to obtain policyID
-* Enhanced SSH connection. Avoiding other methods than pem/password and setting Strict Host to false
+* [SPK-548] Enhanced SSH connection. Avoiding other methods than pem/password and setting Strict Host to false
+* [QATM-2734] include X-UserID for gov request
+* [SECTY-1314] Added step to create tenant if it does not exist
+* [SECTY-1440] BDT refactor for gosec 1.1.1 new paths and ids
+* [QATM-2786] New steps to set default values in tenant and gosec variables
+* [QATM-2786] New step to include an user or group in existing tenant
 
 ## 0.11.0 (June 11, 2019)
 

@@ -23,6 +23,9 @@ import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import io.cucumber.datatable.DataTable;
+import org.hjson.JsonArray;
+import org.hjson.JsonObject;
+import org.hjson.JsonValue;
 import org.json.JSONArray;
 
 import java.io.*;
@@ -660,4 +663,44 @@ public class RestSpec extends BaseGSpec {
         }
     }
 
+    @When("^I include '(user|group)' '(.+?)' in tenant '(.+?)'$")
+    public void includeResourceInTenant(String resource, String resourceId, String tenantId) throws Exception {
+        String endPointGetAllUsers = "/service/gosec-identities-daas/identities/users";
+        String endPointGetAllGroups = "/service/gosec-identities-daas/identities/groups";
+        String endPointTenant = "/service/gosec-identities-daas/identities/tenants/" + tenantId;
+        assertThat(commonspec.getRestHost().isEmpty() || commonspec.getRestPort().isEmpty());
+        String uidOrGid = "uid";
+        String uidOrGidTenant = "uids";
+        String endPointGosec = endPointGetAllUsers;
+        if (resource.equals("group")) {
+            uidOrGid = "gid";
+            uidOrGidTenant = "gids";
+            endPointGosec = endPointGetAllGroups;
+        }
+        sendRequestNoDataTable("GET", endPointGosec, null, null, null);
+        if (commonspec.getResponse().getStatusCode() == 200) {
+            if (commonspec.getResponse().getResponse().contains("\"" + uidOrGid + "\":\"" + resourceId + "\"")) {
+                sendRequestNoDataTable("GET", endPointTenant, null, null, null);
+                if (commonspec.getResponse().getStatusCode() == 200) {
+                    JsonObject jsonTenantInfo = new JsonObject(JsonValue.readHjson(commonspec.getResponse().getResponse()).asObject());
+                    if (((JsonArray) jsonTenantInfo.get(uidOrGidTenant)).values().contains(JsonValue.valueOf(resourceId))) {
+                        commonspec.getLogger().debug("{} is already included in tenant", resourceId);
+                    } else {
+                        ((JsonArray) jsonTenantInfo.get(uidOrGidTenant)).add(resourceId);
+                        Future<Response> response = commonspec.generateRequest("PATCH", false, null, null, endPointTenant, JsonValue.readHjson(jsonTenantInfo.toString()).toString(), "json", "");
+                        commonspec.setResponse("PATCH", response.get());
+                        if (commonspec.getResponse().getStatusCode() != 204) {
+                            throw new Exception("Error adding " + resource + " " + resourceId + " in tenant " + tenantId + " - Status code: " + commonspec.getResponse().getStatusCode());
+                        }
+                    }
+                } else {
+                    throw new Exception("Error obtaining info from tenant " + tenantId + " - Status code: " + commonspec.getResponse().getStatusCode());
+                }
+            } else {
+                throw new Exception(resource + " " + resourceId + " doesn't exist in Gosec");
+            }
+        } else {
+            throw new Exception("Error obtaining " + resource + "s - Status code: " + commonspec.getResponse().getStatusCode());
+        }
+    }
 }

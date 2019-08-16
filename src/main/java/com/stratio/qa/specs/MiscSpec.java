@@ -268,4 +268,86 @@ public class MiscSpec extends BaseGSpec {
                 throw new Exception("Not a valid comparison. Valid ones are: is | matches | is higher than | is higher than or equal to | is lower than | is lower than or equal to | contains | does not contain | is different from");
         }
     }
+
+    @Given("^I set tenant variables$")
+    public void setTenantVariables() throws Exception {
+        String ccTenant = System.getProperty("CC_TENANT", "NONE");
+        String dcosTenant = System.getProperty("DCOS_TENANT");
+        if (dcosTenant == null) {
+            throw new Exception("DCOS_TENANT is null");
+        }
+        String zkTenant = System.getProperty("ZK_TENANT") != null ? System.getProperty("ZK_TENANT") : System.getProperty("DCOS_TENANT");
+        String xdTenant = System.getProperty("XD_TENANT") != null ? System.getProperty("XD_TENANT") : System.getProperty("DCOS_TENANT");
+        String pgTenant = System.getProperty("PG_TENANT") != null ? System.getProperty("PG_TENANT") : System.getProperty("DCOS_TENANT");
+        String elasticTenant = System.getProperty("ELASTIC_TENANT") != null ? System.getProperty("ELASTIC_TENANT") : System.getProperty("DCOS_TENANT");
+        String kafkaTenant = System.getProperty("KAFKA_TENANT") != null ? System.getProperty("KAFKA_TENANT") : System.getProperty("DCOS_TENANT");
+        String sparkTenant = System.getProperty("SPARK_TENANT") != null ? System.getProperty("SPARK_TENANT") : System.getProperty("DCOS_TENANT");
+        String pgXLTenant = System.getProperty("PGD_TENANT") != null ? System.getProperty("PGD_TENANT") : System.getProperty("DCOS_TENANT");
+        String schemaRegistryTenant = System.getProperty("SCHEMA_REGISTRY_TENANT") != null ? System.getProperty("SCHEMA_REGISTRY_TENANT") : System.getProperty("DCOS_TENANT");
+        String restProxyTenant = System.getProperty("REST_PROXY_TENANT") != null ? System.getProperty("REST_PROXY_TENANT") : System.getProperty("DCOS_TENANT");
+        String govTenant = System.getProperty("GOV_TENANT") != null ? System.getProperty("GOV_TENANT") : System.getProperty("DCOS_TENANT");
+        String cassandraTenant = System.getProperty("CASSANDRA_TENANT") != null ? System.getProperty("CASSANDRA_TENANT") : System.getProperty("DCOS_TENANT");
+        String igniteTenant = System.getProperty("IGNITE_TENANT") != null ? System.getProperty("IGNITE_TENANT") : System.getProperty("DCOS_TENANT");
+        String etcdTenant = System.getProperty("ETCD_TENANT") != null ? System.getProperty("ETCD_TENANT") : System.getProperty("DCOS_TENANT");
+        String k8sTenant = System.getProperty("K8S_TENANT") != null ? System.getProperty("K8S_TENANT") : System.getProperty("DCOS_TENANT");
+        String arangoTenant = System.getProperty("ARANGO_TENANT") != null ? System.getProperty("ARANGO_TENANT") : System.getProperty("DCOS_TENANT");
+        String kibanaTenant = System.getProperty("KIBANA_TENANT") != null ? System.getProperty("KIBANA_TENANT") : System.getProperty("DCOS_TENANT");
+        String hdfsTenant = System.getProperty("HDFS_TENANT") != null ? System.getProperty("HDFS_TENANT") : System.getProperty("DCOS_TENANT");
+        String spartaTenant = System.getProperty("SPARTA_TENANT") != null ? System.getProperty("SPARTA_TENANT") : System.getProperty("DCOS_TENANT");
+        ThreadProperty.set("CC_TENANT", ccTenant);
+        ThreadProperty.set("XD_TENANT", xdTenant);
+        ThreadProperty.set("ZK_TENANT", zkTenant);
+        ThreadProperty.set("PG_TENANT", pgTenant);
+        ThreadProperty.set("ELASTIC_TENANT", elasticTenant);
+        ThreadProperty.set("KAFKA_TENANT", kafkaTenant);
+        ThreadProperty.set("SPARK_TENANT", sparkTenant);
+        ThreadProperty.set("PGD_TENANT", pgXLTenant);
+        ThreadProperty.set("SCHEMA_REGISTRY_TENANT", schemaRegistryTenant);
+        ThreadProperty.set("REST_PROXY_TENANT", restProxyTenant);
+        ThreadProperty.set("GOV_TENANT", govTenant);
+        ThreadProperty.set("CASSANDRA_TENANT", cassandraTenant);
+        ThreadProperty.set("IGNITE_TENANT", igniteTenant);
+        ThreadProperty.set("ETCD_TENANT", etcdTenant);
+        ThreadProperty.set("K8S_TENANT", k8sTenant);
+        ThreadProperty.set("ARANGO_TENANT", arangoTenant);
+        ThreadProperty.set("KIBANA_TENANT", kibanaTenant);
+        ThreadProperty.set("HDFS_TENANT", hdfsTenant);
+        ThreadProperty.set("SPARTA_TENANT", spartaTenant);
+        commonspec.getLogger().debug("Tenant variables: XD --> {}, ZK --> {}, CC --> {}, PG --> {}, ELASTIC --> {}, KAFKA --> {}, SPARK --> {}, PGD --> {}, SCHEMA REG --> {}, REST PROXY --> {}," +
+                        "GOVERNANCE --> {}, CASSANDRA --> {}, IGNITE --> {}, ETCD --> {}, K8S --> {}, ARANGO --> {}, KIBANA --> {}, HDFS --> {}, SPARTA --> {}",
+                xdTenant, zkTenant, ccTenant, pgTenant, elasticTenant, kafkaTenant, sparkTenant, pgXLTenant, schemaRegistryTenant, restProxyTenant, govTenant, cassandraTenant, igniteTenant,
+                etcdTenant, k8sTenant, arangoTenant, kibanaTenant, hdfsTenant, spartaTenant);
+    }
+
+    @Given("^I set gosec API variables$")
+    public void setGosecVariables() throws Exception {
+        String gosecVersion = System.getProperty("STRATIO_GOSEC_MANAGEMENT_VERSION");
+        if (gosecVersion == null) {
+            throw new Exception("STRATIO_GOSEC_MANAGEMENT_VERSION has not been defined");
+        }
+        String[] gosecVersionArray = gosecVersion.split("\\.");
+        if (gosecVersionArray.length != 3) {
+            throw new Exception("STRATIO_GOSEC_MANAGEMENT_VERSION must have X.X.X format");
+        }
+        if (Integer.parseInt(gosecVersionArray[0]) >= 1 &&
+                (Integer.parseInt(gosecVersionArray[1]) > 1 || (Integer.parseInt(gosecVersionArray[1]) == 1 && Integer.parseInt(gosecVersionArray[2]) >= 1))) { //Gosec version >= 1.1.1
+            ThreadProperty.set("API_USER", "/api/user?id=");
+            ThreadProperty.set("API_GROUP", "/api/group?id=");
+            ThreadProperty.set("API_POLICY", "/api/policy?id=");
+            ThreadProperty.set("API_TAG", "/api/policy/tag?id=");
+            ThreadProperty.set("API_USERS", "/api/users");
+            ThreadProperty.set("API_GROUPS", "/api/groups");
+            ThreadProperty.set("API_POLICIES", "/api/policies");
+            ThreadProperty.set("API_TAGS", "/api/policies/tags");
+        } else {
+            ThreadProperty.set("API_USER", "/api/user/");
+            ThreadProperty.set("API_GROUP", "/api/group/");
+            ThreadProperty.set("API_POLICY", "/api/policy/");
+            ThreadProperty.set("API_TAG", "/api/policy/tag/");
+            ThreadProperty.set("API_USERS", "/api/user");
+            ThreadProperty.set("API_GROUPS", "/api/group");
+            ThreadProperty.set("API_POLICIES", "/api/policy");
+            ThreadProperty.set("API_TAGS", "/api/policy/tag");
+        }
+    }
 }
