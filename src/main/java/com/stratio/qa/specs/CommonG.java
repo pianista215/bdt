@@ -1202,6 +1202,7 @@ public class CommonG {
                         request = request.setHeader("Content-Type", "application/json; charset=UTF-8");
                         request = request.setHeader("Accept", "application/json");
                         request = request.setHeader("X-TenantID", "NONE");
+                        request = request.setHeader("X-UserID", "admin");
                     }
                 } else {
                     request = this.getClient().prepareDelete(restURL + endPoint).setBody(data);
@@ -1214,6 +1215,7 @@ public class CommonG {
                         request = request.setHeader("Content-Type", "application/json; charset=UTF-8");
                         request = request.setHeader("Accept", "application/json");
                         request = request.setHeader("X-TenantID", "NONE");
+                        request = request.setHeader("X-UserID", "admin");
                     }
                 }
                 if (this.getSeleniumCookies().size() > 0) {
@@ -1258,6 +1260,7 @@ public class CommonG {
                         request = request.setHeader("Content-Type", "application/json; charset=UTF-8");
                         request = request.setHeader("Accept", "application/json");
                         request = request.setHeader("X-TenantID", "NONE");
+                        request = request.setHeader("X-UserID", "admin");
                     }
 
                     if (this.getResponse() != null) {
@@ -1302,6 +1305,7 @@ public class CommonG {
                         request = request.setHeader("Content-Type", "application/json; charset=UTF-8");
                         request = request.setHeader("Accept", "application/json");
                         request = request.setHeader("X-TenantID", "NONE");
+                        request = request.setHeader("X-UserID", "admin");
                     }
 
                     if (this.getResponse() != null) {
@@ -1346,6 +1350,7 @@ public class CommonG {
                         request = request.setHeader("Content-Type", "application/json; charset=UTF-8");
                         request = request.setHeader("Accept", "application/json");
                         request = request.setHeader("X-TenantID", "NONE");
+                        request = request.setHeader("X-UserID", "admin");
                     }
 
                     if (this.getResponse() != null) {
