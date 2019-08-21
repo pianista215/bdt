@@ -186,10 +186,11 @@ public class CommandExecutionSpec extends BaseGSpec {
      * @param sExitStatus
      * @throws InterruptedException
      */
-    @Then("^in less than '(\\d+)' seconds, checking each '(\\d+)' seconds, the command output '(.+?)' contains '(.*?)'( with exit status '(\\d+)')?$")
-    public void assertCommandExistsOnTimeOut(Integer timeout, Integer wait, String command, String search, String sExitStatus) throws Exception {
+    @Then("^in less than '(\\d+)' seconds, checking each '(\\d+)' seconds, the command output '(.+?)'( not)? contains '(.*?)'( with exit status '(\\d+)')?$")
+    public void assertCommandExistsOnTimeOut(Integer timeout, Integer wait, String command, String contains, String search, String sExitStatus) throws Exception {
         Integer exitStatus = sExitStatus != null ? Integer.valueOf(sExitStatus) : null;
         Boolean found = false;
+
         command = "set -o pipefail && alias grep='grep --color=never' && " + command;
         for (int i = 0; (i <= timeout); i += wait) {
             if (found) {
@@ -202,7 +203,11 @@ public class CommandExecutionSpec extends BaseGSpec {
                 if (exitStatus != null) {
                     assertThat(commonspec.getRemoteSSHConnection().getExitStatus()).isEqualTo(exitStatus);
                 }
-                assertThat(commonspec.getCommandResult()).as("Contains " + search + ".").contains(search);
+                if (contains == null || contains.isEmpty()) {
+                    assertThat(commonspec.getCommandResult()).as("Contains " + search + ".").contains(search);
+                } else {
+                    assertThat(commonspec.getCommandResult()).as("doesn't contains " + search + ".").doesNotContain(search);
+                }
                 found = true;
                 timeout = i;
             } catch (AssertionError e) {

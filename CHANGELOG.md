@@ -28,6 +28,7 @@ Only listing significant user-visible, not internal code cleanups and minor bug 
 * [SECTY-1440] BDT refactor for gosec 1.1.1 new paths and ids
 * [QATM-2786] New steps to set default values in tenant and gosec variables
 * [QATM-2786] New step to include an user or group in existing tenant
+* [QATM-2789] Support doesn't contain in SSH Command output
 
 ## 0.11.0 (June 11, 2019)
 
